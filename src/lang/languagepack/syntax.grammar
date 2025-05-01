@@ -1,0 +1,315 @@
+@top Program { Statement* }
+
+Statement {
+  Block
+| Command
+}
+
+Block {
+  "{" BlockHead BlockBody* "}"
+}
+
+BlockHead {
+  SetStatement
+| LoopStatement
+| ForStatement
+| IfStatement
+| FuncDef
+}
+
+BlockBody {
+  Statement
+}
+
+SetStatement {
+  "set" Identifier "=" Expression
+}
+
+LoopStatement {
+  "loop" Expression
+}
+ForStatement {
+  "for" Expression
+}
+
+IfStatement {
+  "if" Expression
+}
+
+FuncDef {
+  "func" Identifier ParamList
+}
+
+ParamList {
+  "|" ParamListInner? "|"
+}
+
+ParamListInner {
+  Identifier ("," Identifier)*
+}
+
+Command {
+  "[" Identifier ArgList? "]"
+}
+
+ArgList {
+  Expression ("," Expression)*
+}
+
+Expression {
+  BinaryExpression
+}
+
+BinaryExpression {
+  EqualityExpression
+}
+
+EqualityExpression {
+  RelationalExpression (("==" | "!=") RelationalExpression)*
+}
+
+RelationalExpression {
+  AdditiveExpression (("<" | ">" | "<=" | ">=") AdditiveExpression)*
+}
+
+AdditiveExpression {
+  MultiplicativeExpression (("+" | "-") MultiplicativeExpression)*
+}
+
+MultiplicativeExpression {
+  PrimaryExpression (("*" | "/" | "%") PrimaryExpression)*
+}
+
+PrimaryExpression {
+  Number
+| String
+| Identifier
+// | KeyWord
+| LineComment
+| "(" Expression ")"
+}
+
+@tokens {
+  whitespace { $[ \t\n\r]+ }
+  LineComment { "#" ![\n]* }
+  Number { @digit+ }
+  String { '"' (!["\\] | "\\" _)* '"' }
+  Identifier { $[a-zA-Z_]+ }
+
+  "{" "}" "[" "]" "(" ")" "," "|" "="
+  "+" "-" "*" "/" "%"
+  "==" "!=" "<" ">" "<=" ">="
+}
+
+@skip { whitespace }
+
+// @keywords {
+//   "set" | "loop" | "if" | "func"
+// }
+
+// @precedence {
+//   left "==" "!="
+//   left "<" ">" "<=" ">="
+//   left "+" "-"
+//   left "*" "/" "%"
+// }
+
+
+// @top Program { Statement* }
+
+// Statement {
+//   Block
+// | Command
+// }
+
+// Block {
+//   "{" BlockContent* "}"
+// }
+
+// BlockContent {
+//   SetStatement
+// // | LoopStatement
+// | Statement
+// }
+
+// SetStatement {
+//   "set" Identifier "=" Expression
+// }
+
+// // LoopStatement {
+// //   "loop" Expression BlockContent*
+// // }
+
+// Command {
+//   "[" Identifier Expression? "]"
+// }
+
+// Expression {
+//   BinaryExpression
+// }
+
+// BinaryExpression {
+//   AdditiveExpression
+// }
+
+// AdditiveExpression {
+//   MultiplicativeExpression
+//   (("+" | "-") MultiplicativeExpression)*
+// }
+
+// MultiplicativeExpression {
+//   PrimaryExpression
+//   (("*" | "/" | "%") PrimaryExpression)*
+// }
+
+// PrimaryExpression {
+//   Number
+// // | BooleanLiteral
+// | KeyWord
+// | String
+// // | Null
+// // | Identifier
+// | Icons
+// | LineComment
+// | "(" Expression ")"
+// }
+
+// @tokens {
+//   KeyWord { "null" | "func" | "if" | "else" | "loop" }
+//   whitespace { $[ \t\n\r]+ }
+//   LineComment { "#" ![\n]* }
+//   Number { @digit+ }
+//   Identifier { @asciiLetter+ }
+//   String { '"' (!["\\] | "\\" _)* '"' }
+//   // BooleanLiteral { "true" | "false" }
+//   // Null { "null" }
+
+//   Icons{
+//    "=" "+" "-" "*" "/" "%" "(" ")" ","
+// }
+//   ","
+
+//   "(" ")"
+//   "[" "]"
+//   "{" "}"
+
+
+  
+// }
+
+// @skip { whitespace }
+// // @keywords {
+//   // "true" | "false" | "null" | "func" | "if" | "else" | "loop" | "set"
+// // }
+
+// // @precedence {
+// //   "+" "-" @left
+// //   "*" "/" "%" @left
+// // }
+
+
+// // @top JsonText { value }
+
+// // value { KeyWord | Number | String | LineComment | Array | Identifier}
+
+// // // String { string }
+// // // Object { "{" list<Property>? "}" }
+// // Array  { "[" list<value>? "]" }
+
+// // // Property { PropertyName ":" value }
+// // // PropertyName { string }
+
+
+// // @tokens {
+// //   "(" ")" "[" "]" "{" "}"
+// //   KeyWord { "true" | "false" | "null" | "func" | "if" | "else" | "loop" }
+// // //   True  { "true" }
+// // //   False { "false" }
+
+// // //   Null  { "null" }
+
+// // //   Number { '-'? int frac? exp?  }
+// // //   int  { '0' | $[1-9] @digit* }
+// // //   frac { '.' @digit+ }
+// // //   exp  { $[eE] $[+\-]? @digit+ }
+
+// // //   string { '"' char* '"' }
+// // //   char { $[\u{20}\u{21}\u{23}-\u{5b}\u{5d}-\u{10ffff}] | "\\" esc }
+// // //   esc  { $["\\\/bfnrt] | "u" hex hex hex hex }
+// // //   hex  { $[0-9a-fA-F] }
+// //   Identifier { $[a-zA-Z]+ }
+
+// //   String { '"' (!["\\] | "\\" _)* '"' }
+
+// //   Number { @digit+ }
+
+// //   whitespace { $[ \n\r\t] }
+
+// //   LineComment { "#" ![\n]* }
+
+  
+// // }
+
+// // @skip { whitespace }
+// // list<item> { item item? ("," item)* }
+
+// // // @external propSource jsonHighlighting from "./highlight"
+
+// // @detectDelim
+
+
+// // // @top Program { expression*  statement+ }   
+// // @top Program { expression* }   
+
+// // @skip { space | LineComment }
+
+// // expression {
+// // //   Boolean |
+// //   Identifier |
+// //   String |
+// //   Number |
+// //     BinaryExpression |
+// //   Application { "(" expression* ")" }
+// // }
+
+// // @precedence {
+// //     // Boolean,
+// //     Identifier,
+// //     String,
+// //     Number,
+// //     Application
+// // }
+  
+
+
+// // // statement { FunctionDeclaration | FunctionExpression }
+
+// // // FunctionExpression { "[" "function" expression "]" }
+
+// // // FunctionDeclaration { "func" "|" expression "|" }
+
+
+// // @tokens {
+// //   BinaryExpression { "(" expression ("+" | "-" | "*" | "/" | "%") expression ")" }
+// // //   Boolean { "#true" | "#false" }
+
+// //   Identifier { $[a-zA-Z]+ }
+
+// //   String { '"' (!["\\] | "\\" _)* '"' }
+
+// //   Number { @digit+ }
+
+// //   LineComment { "#" ![\n]* }
+
+
+
+// //   space { $[ \t\n\r]+ }
+
+// //   "(" ")"
+// //   "[" "]"
+// //   "{" "}"
+
+
+// // }
+
+// // @detectDelim

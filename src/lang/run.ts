@@ -7,7 +7,7 @@ import { Lexer } from "./front/lexer.ts";
 // repl();
 
 export function run(code: string,env: Environment) {
-    console.log("code: ", code)
+    // console.log("code: ", code)
     let lexer = new Lexer(code)
     let tokens = lexer.tokenize()
     console.dir(tokens)

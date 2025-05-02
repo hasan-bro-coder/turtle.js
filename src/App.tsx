@@ -42,6 +42,7 @@ function App() {
   }
 
   let runit = (_code: string) => {
+    console.clear()
     if (timeout) {
       clearTimeout(timeout);
     }

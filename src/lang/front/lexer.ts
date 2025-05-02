@@ -75,7 +75,7 @@ export class Lexer {
     }
 
     private isalpha(src: string): boolean {
-        return src.toUpperCase() != src.toLowerCase();
+        return src.toUpperCase() != src.toLowerCase() || src == "_";
     }
 
     private isskippable(str: string): boolean {
@@ -134,10 +134,21 @@ export class Lexer {
             } else {
                 if (this.isint(this.src[0])) {
                     let num = "";
-                    while (this.src.length > 0 && this.isint(this.src[0]) && !this.err) {
+                    let hasDot = false;
+                    while (this.src.length > 0 && (this.isint(this.src[0]) || (!hasDot && this.src[0] === ".")) && !this.err) {
+                        if (this.src[0] === ".") {
+                            hasDot = true;
+                        }
                         num += this.src.shift();
                     }
-                    this.tokens.push(this.token(num, TokenType.Number));
+                    if (hasDot && num.split(".").length === 2 && num.split(".")[1] !== "") {
+                        this.tokens.push(this.token(num, TokenType.Number));
+                    } else if (!hasDot) {
+                        this.tokens.push(this.token(num, TokenType.Number));
+                    } else {
+                        console.error("Invalid float format");
+                        this.err = true;
+                    }
                 } else if (this.isalpha(this.src[0])) {
                     let ident = "";
                     while (this.src.length > 0 && this.isalpha(this.src[0])) {

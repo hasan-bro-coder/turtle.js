@@ -16,10 +16,10 @@ export default class Environment {
 
   public builtins(){
     this
-    .addBuilitinFunc("print", 1, (args: RuntimeVal[]) => {
-      // console.log(`${args[0].value} (${args[0].type})`);
+    .addBuilitinFunc("log", 1, (args: RuntimeVal[]) => {
       // @ts-ignore
-      console.log(args[0].value);
+      console.log(`${args[0].value} (${args[0].type})`);
+      // console.log(args[0].value);
 
       return MK_NULL();
     })
@@ -55,7 +55,7 @@ export default class Environment {
   public getFunc(name: string): FuncVal {
     if (this.parent == undefined) {
       if (!this.funcs.has(name)) {
-        throw `Cannot resolve '${name}' as it does not exist.`;
+        console.error(`Cannot resolve '${name}' as it does not exist.`)
       }
       return this.funcs.get(name) as FuncVal;
     }
@@ -71,7 +71,7 @@ export default class Environment {
 
   public declareVar(varname: string, value: RuntimeVal): RuntimeVal {
     if (this.variables.has(varname)) {
-      throw `Cannot declare variable ${varname}. As it already is defined.`;
+      console.error(`Cannot declare variable ${varname}. As it already is defined.`);
     }
 
     this.variables.set(varname, value);
@@ -95,7 +95,8 @@ export default class Environment {
     }
 
     if (this.parent == undefined) {
-      throw `Cannot resolve '${varname}' as it does not exist.`;
+      console.error(`Cannot resolve '${varname}' as it does not exist.`);
+      return this;
     }
 
     return this.parent.resolve(varname);

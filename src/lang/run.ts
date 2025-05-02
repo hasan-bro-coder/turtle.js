@@ -1,26 +1,34 @@
 import Parser from "./front/parser.ts";
 import Environment from "./back/env.ts";
 import { evaluate } from "./back/interpret.ts";
-import { MK_BOOL, MK_NULL, MK_NUMBER } from "./back/values.ts";
-import { tokenize } from "./front/lexer.ts";
+import { MK_BOOL, MK_NULL } from "./back/values.ts";
+import { Lexer } from "./front/lexer.ts";
 
 // repl();
 
 export function run(code: string,env: Environment) {
     console.log("code: ", code)
-    let tokens = tokenize(code)
+    let lexer = new Lexer(code)
+    let tokens = lexer.tokenize()
     console.dir(tokens)
     console.log("--------tokens--------");
     
+    if (lexer.err == true) {
+        return;
+    }
+
     let parser = new Parser()
     let ast = parser.produceAST(tokens)
     console.dir(ast)
 
     console.log("----------ast---------");
 
+    if (parser.err == true) {
+        return;
+    }
 
     // Create Default Global Enviornment
-    env.declareVar("x", MK_NUMBER(100));
+    // env.declareVar("x", MK_NUMBER(100));
     env.declareVar("true", MK_BOOL(true));
     env.declareVar("false", MK_BOOL(false));
     env.declareVar("null", MK_NULL());

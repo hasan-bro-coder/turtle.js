@@ -1,4 +1,4 @@
-import { BooleanVal, FuncVal, MK_NULL, NullVal, NumberVal, RuntimeVal, StringVal } from "./values.ts";
+import { BooleanVal, FuncVal, MK_NULL, NumberVal, RuntimeVal, StringVal } from "./values.ts";
 import {
     BinaryExpr,
     BlockStmt,
@@ -92,6 +92,22 @@ function eval_binary_expr(binop: BinaryExpr, env: Environment): RuntimeVal {
             rhs as NumberVal,
             binop.operator,
         );
+    }
+    if (lhs.type == "string" || rhs.type == "string") {
+        let result: string;
+        if (binop.operator == "+") {
+            result = (lhs as StringVal).value + (rhs as StringVal).value;
+        }else{
+            err = true;
+            console.error("String operator not supported", binop.operator);
+            return MK_NULL();
+        }
+        return { value: result, type: "string" } as StringVal;
+        // return eval_numeric_binary_expr(
+        //     lhs as StringVal,
+        //     rhs as StringVal,
+        //     binop.operator,
+        // );
     }
 
     // One or both are NULL

@@ -9,7 +9,7 @@ import Split from 'react-split'
 import { useDispatch, useSelector } from 'react-redux';
 import { useState } from 'react';
 
-import { clearConsole,change } from './store';
+import { clearConsole } from './store';
 import TjsConsole from './component/tjsconsole';
 
 function App() {
@@ -26,11 +26,25 @@ function App() {
   // }
   let [running, setRunning] = useState(false)
 
+  let timeout: null | ReturnType<typeof setTimeout> = null;
   let changed: (code: string) => void = (code: string) => {
     localStorage.setItem('code', code);
+
+
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    timeout = setTimeout(() => {
+      dispatch(clearConsole())
+      setRunning(true)
+    }, 500);
   }
 
   let runit = (_code: string) => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
     document.querySelector('#canvas-con')
       ?.scrollIntoView();
     dispatch(clearConsole())
@@ -48,18 +62,18 @@ function App() {
     URL.revokeObjectURL(url);
   }
 
-  let loadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        localStorage.setItem('code', content);
-        dispatch(change(content));
-      };
-      reader.readAsText(file);
-    }
-  };
+  // let loadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       const content = e.target?.result as string;
+  //       localStorage.setItem('code', content);
+  //       dispatch(change(content));
+  //     };
+  //     reader.readAsText(file);
+  //   }
+  // };
 
 
 
@@ -67,7 +81,7 @@ function App() {
     <>
       <Nav run={() => runit(code)} save={save} back={() =>
         document.querySelector('#code-con')?.scrollIntoView()
-      } load={loadFile}></Nav>
+      }></Nav>
       {/* <div id='app'> */}
       <Split
         className='app-con'
@@ -76,7 +90,7 @@ function App() {
         snapOffset={30}
         dragInterval={1}
         direction='vertical'
-        minSize={[500,200]}
+        minSize={[500, 200]}
         expandToMin={true}
       >
         <Split

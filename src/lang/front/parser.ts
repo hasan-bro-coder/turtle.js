@@ -23,7 +23,7 @@ import { Token, TokenType } from "./lexer.ts";
  */
 export default class Parser {
     private tokens: Token[] = [];
-    private err = false;
+    public err = false;
     /*
      * Determines if the parsing is complete and the END OF FILE Is reached.
      */

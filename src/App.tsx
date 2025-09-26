@@ -1,19 +1,18 @@
 // import { useState } from 'react'
-import './App.scss'
-import Nav from './component/nav'
+import "./App.scss";
+import Nav from "./component/nav";
 import Editor from "./component/editor";
 import Canvas from "./component/canvas";
 
-import Split from 'react-split'
+import Split from "react-split";
 
-import { useDispatch, useSelector } from 'react-redux';
-import { useState } from 'react';
+import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 
-import { clearConsole } from './store';
-import TjsConsole from './component/tjsconsole';
+import { clearConsole } from "./store";
+import TjsConsole from "./component/tjsconsole";
 
 function App() {
-
   // let [code] = useState("YO")
 
   // let env = new Environment();
@@ -24,44 +23,42 @@ function App() {
   let console2 = useSelector((state: any) => state.tjsconsole);
   let dispatch = useDispatch();
   // }
-  let [running, setRunning] = useState(false)
+  let [running, setRunning] = useState(false);
 
   let timeout: null | ReturnType<typeof setTimeout> = null;
   let changed: (code: string) => void = (code: string) => {
-    localStorage.setItem('code', code);
+    localStorage.setItem("code", code);
 
-
-    if (timeout) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-    timeout = setTimeout(() => {
-      dispatch(clearConsole())
-      setRunning(true)
-    }, 500);
-  }
+    // if (timeout) {
+    //   clearTimeout(timeout);
+    //   timeout = null;
+    // }
+    // timeout = setTimeout(() => {
+    //   dispatch(clearConsole())
+    //   setRunning(true)
+    // }, 500);
+  };
 
   let runit = (_code: string) => {
-    console.clear()
+    console.clear();
     if (timeout) {
       clearTimeout(timeout);
     }
-    document.querySelector('#canvas-con')
-      ?.scrollIntoView();
-    dispatch(clearConsole())
-    setRunning(true)
+    document.querySelector("#canvas-con")?.scrollIntoView();
+    dispatch(clearConsole());
+    setRunning(true);
     // run(code,env)
-  }
+  };
 
   let save = () => {
-    const blob = new Blob([code], { type: 'text/plain' });
+    const blob = new Blob([code], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = 'code.txt';
+    link.download = "code.txt";
     link.click();
     URL.revokeObjectURL(url);
-  }
+  };
 
   // let loadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   const file = event.target.files?.[0];
@@ -76,45 +73,43 @@ function App() {
   //   }
   // };
 
-
-
   return (
     <>
-      <Nav run={() => runit(code)} save={save} back={() =>
-        document.querySelector('#code-con')?.scrollIntoView()
-      }></Nav>
+      <Nav
+        run={() => runit(code)}
+        save={save}
+        back={() => document.querySelector("#code-con")?.scrollIntoView()}
+      ></Nav>
       {/* <div id='app'> */}
       <Split
-        className='app-con'
+        className="app-con"
         gutterSize={8}
         gutterAlign="center"
         snapOffset={30}
         dragInterval={1}
-        direction='vertical'
+        direction="vertical"
         minSize={[500, 200]}
         expandToMin={true}
       >
         <Split
-          className='app'
+          className="app"
           gutterSize={8}
           gutterAlign="center"
           snapOffset={30}
           dragInterval={1}
           cursor="col-resize"
-          direction='horizontal'
+          direction="horizontal"
           minSize={300}
           expandToMin={false}
         >
-          <Editor
-            changed={changed}
-          ></Editor>
+          <Editor changed={changed}></Editor>
           <Canvas isClicked={running} setRunning={setRunning}></Canvas>
         </Split>
         <TjsConsole output={console2}></TjsConsole>
       </Split>
       {/* </div> */}
     </>
-  )
+  );
 }
 
-export default App
+export default App;

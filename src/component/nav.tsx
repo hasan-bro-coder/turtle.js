@@ -1,5 +1,5 @@
 import { FC } from "react";
-
+import InstallPWA from "./pwabutton";
 interface NavProps {
     run: () => void;
     save: () => void;
@@ -9,6 +9,7 @@ interface NavProps {
 
 var Nav: FC<NavProps> = (props)=>{
     return <nav>
+        <InstallPWA></InstallPWA>
         <button id="run" onClick={props.run}>run</button>
         <button id="save" onClick={props.save}>save</button>
         {/* <button id="load" onClick={document.querySelector<HTMLInputElement>(`input[type="file"]`)?.click}>load</button> */}

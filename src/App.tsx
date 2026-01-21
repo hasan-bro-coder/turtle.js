@@ -78,7 +78,7 @@ function App() {
       <Nav
         run={() => runit(code)}
         save={save}
-        back={() => document.querySelector("#code-con")?.scrollIntoView()}
+        back={() => 0}
       ></Nav>
 
       <div className="div flex flex-column">

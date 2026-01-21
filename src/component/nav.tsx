@@ -8,7 +8,7 @@ interface NavProps {
 
 
 var Nav: FC<NavProps> = (props)=>{
-    return <nav >
+    return <nav>
         <button id="run" onClick={props.run}>run</button>
         <button id="save" onClick={props.save}>save</button>
         {/* <button id="load" onClick={document.querySelector<HTMLInputElement>(`input[type="file"]`)?.click}>load</button> */}

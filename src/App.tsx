@@ -4,13 +4,13 @@ import Nav from "./component/nav";
 import Editor from "./component/editor";
 import Canvas from "./component/canvas";
 
-import Split from "react-split";
+// import Split from "react-split";
 
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 
 import { clearConsole } from "./store";
-import TjsConsole from "./component/tjsconsole";
+// import TjsConsole from "./component/tjsconsole";
 
 function App() {
   // let [code] = useState("YO")
@@ -20,7 +20,7 @@ function App() {
   let code = useSelector((state: any) => state.code);
   // let run = (code: string) => {
 
-  let console2 = useSelector((state: any) => state.tjsconsole);
+  // let console2 = useSelector((state: any) => state.tjsconsole);
   let dispatch = useDispatch();
   // }
   let [running, setRunning] = useState(false);
@@ -80,8 +80,13 @@ function App() {
         save={save}
         back={() => document.querySelector("#code-con")?.scrollIntoView()}
       ></Nav>
+
+      <div className="div flex flex-column">
+        <Editor changed={changed}></Editor>
+        <Canvas isClicked={running} setRunning={setRunning}></Canvas>
+      </div>
       {/* <div id='app'> */}
-      <Split
+      {/* <Split
         className="app-con"
         gutterSize={8}
         gutterAlign="center"
@@ -104,9 +109,9 @@ function App() {
         >
           <Editor changed={changed}></Editor>
           <Canvas isClicked={running} setRunning={setRunning}></Canvas>
-        </Split>
+        </Split> 
         <TjsConsole output={console2}></TjsConsole>
-      </Split>
+      </Split> */}
       {/* </div> */}
     </>
   );

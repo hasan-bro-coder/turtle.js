@@ -3,28 +3,33 @@ import Environment from "./back/env.ts";
 import { evaluate } from "./back/interpret.ts";
 import { MK_BOOL, MK_NULL } from "./back/values.ts";
 import { Lexer } from "./front/lexer.ts";
+// import { addConsole } from "../store.ts";
+// import { useDispatch } from "react-redux";
+import { Program } from "./front/ast.ts";
 
-// repl();
-
-export function run(code: string,env: Environment) {
-    // console.log("code: ", code)
-    let lexer = new Lexer(code)
-    let tokens = lexer.tokenize()
-    console.dir(tokens)
+export function run(code: string, env: Environment) {
+  let ast: Program = {
+    kind: "Program",
+    body: [],
+  };
+  try {
+    let lexer = new Lexer(code);
+    let tokens = lexer.tokenize();
+    console.dir(tokens);
     console.log("--------tokens--------");
-    
+
     if (lexer.err == true) {
-        return;
+      return;
     }
 
-    let parser = new Parser()
-    let ast = parser.produceAST(tokens)
-    console.dir(ast)
+    let parser = new Parser();
+    ast = parser.produceAST(tokens);
+    console.dir(ast);
 
     console.log("----------ast---------");
 
     if (parser.err == true) {
-        return;
+      return;
     }
 
     // Create Default Global Enviornment
@@ -46,10 +51,14 @@ export function run(code: string,env: Environment) {
 
     //     // Produce AST From sourc-code
     //     const program = parser.produceAST(input);
+  } catch (err) {
+    alert(err);
+    // let dispatch = useDispatch();
+    // dispatch(addConsole(err));
+  }
+  const result = evaluate(ast, env);
+  console.log(result);
+  console.log("----------result---------");
 
-    const result = evaluate(ast, env);
-    console.log(result);
-    console.log("----------result---------");
-
-    // }
+  // }
 }

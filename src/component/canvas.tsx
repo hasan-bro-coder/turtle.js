@@ -64,7 +64,7 @@ let Canvas: FC<CanvasProp> = (props) => {
 
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
-    dim: number = Math.floor(window.innerWidth / 240) * 100;
+    dim: number = Math.floor(window.innerWidth / 2);
     width: number = this.dim;
     height: number = this.dim;
     x: number = this.width / 2;

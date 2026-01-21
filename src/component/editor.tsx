@@ -100,7 +100,7 @@ function Editor({ changed }: EditorProps) {
       <CodeMirror
         value={getdata()}
         placeholder="Please enter TJS code."
-        height="100%"
+        height="50vh"
         theme={vscodeDark}
         onChange={(value) => {
           // console.log('value:', value);

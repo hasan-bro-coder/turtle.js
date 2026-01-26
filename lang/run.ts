@@ -3,11 +3,13 @@ import type { Program } from "./front/ast.ts";
 import { Lexer } from "./front/lexer.ts";
 import Parser from "./front/parser.ts";
 import Interpreter from "./back/interpret.ts";
+import Environment from "./back/env.ts";
+// let env
 import { env } from "../src/module.ts";
 export function run(code: string) {
   let lexer = new Lexer(code);
   let tokens = lexer.tokenize();
-  // Console.print(JSON.stringify(tokens,null,4));
+  console.log(tokens)
   if (lexer.err == true) {
     Console.error("Lexer error: " + lexer.errMessage);
     return;
@@ -28,7 +30,7 @@ export function run(code: string) {
   }
   console.log("----------ast---------");
 
-  let evaluate = new Interpreter(env);
+  let evaluate = new Interpreter(new Environment(env));
   evaluate.evaluate(ast);
   if (evaluate.err == true) {
     Console.error("Runtime error: " + evaluate.errMessage);
@@ -39,7 +41,8 @@ export function run(code: string) {
   console.log("----------result---------");
 }
 
-// run(``);
+// run(`fowrward -1
+// `);
 
 // import Parser from "./front/parser.ts";
 // import Environment from "./back/env.ts";

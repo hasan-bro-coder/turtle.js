@@ -1,4 +1,4 @@
-import { Stmt } from "../front/ast";
+import { Stmt } from "../front/ast.ts";
 
 export type ValueType = "null" | "number" | "boolean" | "function" | "string";
 

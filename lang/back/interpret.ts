@@ -132,7 +132,9 @@ class Interpreter {
         return result;
     }
 
-    private eval_func_run(stmt: FuncExpr): RuntimeVal {
+    
+
+    public eval_func_run(stmt: FuncExpr): RuntimeVal {
         let func = this.globalEnv.getFunc(stmt.funcname);
         if (func.builtin && func.run) {
             const evaluatedArgs = stmt.props.map(arg => this.evaluate(arg));

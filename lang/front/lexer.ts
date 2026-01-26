@@ -102,7 +102,6 @@ export class Lexer {
         this.tokens.push(this.token(this.src.shift(), TokenType.CloseBrace));
       } else if (
         this.src[0] == "+" ||
-        this.src[0] == "-" ||
         this.src[0] == "*" ||
         this.src[0] == "/" ||
         this.src[0] == "%"
@@ -134,6 +133,40 @@ export class Lexer {
           this.tokens.push(this.token("==", TokenType.LogicalOperator));
         } else {
           this.tokens.push(this.token(this.src.shift(), TokenType.Equals));
+        }
+      } else if (this.src[0] == "-") {
+        
+        if (this.isint(this.src[1])) {
+          let num = this.src.shift() as string; // Include the '-' sign
+          let hasDot = false;
+          while (
+            this.src.length > 0 &&
+            //@ts-ignore
+            (this.isint(this.src[0]) || (!hasDot && this.src[0] === ".")) &&
+            !this.err
+          ) {
+            //@ts-ignore
+            if (this.src[0] === ".") {
+              hasDot = true;
+            }
+            num += this.src.shift();
+          }
+          if (
+            hasDot &&
+            num.split(".").length === 2 &&
+            num.split(".")[1] !== ""
+          ) {
+            this.tokens.push(this.token(num, TokenType.Number));
+          } else if (!hasDot) {
+            this.tokens.push(this.token(num, TokenType.Number));
+          } else {
+            this.errMessage = "Invalid float format";
+            this.err = true;
+          }
+        }else{
+          this.tokens.push(
+          this.token(this.src.shift(), TokenType.BinaryOperator),
+        );
         }
       } else {
         if (this.isint(this.src[0])) {

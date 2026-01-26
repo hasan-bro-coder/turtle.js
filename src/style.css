@@ -1,0 +1,144 @@
+:root {
+  --bg-color: #282c34;
+  --nav-bg: #282c34;
+  --accent: #e5c07b;
+  --text: #ffffff;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg-color);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+.navbar {
+  height: 50px;
+  background: var(--nav-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #333;
+}
+
+.logo { font-weight: bold; letter-spacing: 1px; }
+.logo span { color: var(--accent); }
+
+#runBtn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#runBtn:active { transform: scale(0.95); }
+
+.app-container {
+  display: flex;
+  height: calc(100vh - 50px);
+  width: 100vw;
+}
+
+#editor-container, #canvas-container {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+#canvas-wrapper {
+  flex: 1;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+canvas {
+  background: #000;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  border-right: 1px solid #333;
+}
+
+#editor-container {
+  flex: 3; /* Editor takes 75% height */
+  overflow: hidden;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  
+}
+
+#console-container {
+  flex: 1.25; /* Console takes 25% height */
+  background: var(--bg-color);
+  border-top: 1px solid #ffffff;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Fira Code', monospace;
+  overflow-y: auto;
+}
+
+.console-header {
+  padding: 5px 15px;
+  background: var(--bg-color);
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+#console-output {
+  padding: 10px;
+  font-size: 14px;
+  color: #ccc;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.console-timestamp {
+  color: #555;
+  font-size: 11px;
+  margin-right: 8px;
+  user-select: none;
+}
+
+.log-error { color: #ff6b6b; border-left: 3px solid #ff6b6b; padding-left: 5px; margin-bottom: 2px; }
+.log-info { color: #f0f0f0; margin-bottom: 2px; }
+.log-warn { color: #ffd93d; }
+
+.console-msg {
+  word-break: break-all;
+}
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  #editor-container, #canvas-container {
+    flex: none;
+    width: 100%;
+    height: 50vh; /* Split half and half on mobile */
+  }
+  #console-container {
+    display: none;
+  }
+  /* #editor-container { border-right: none; border-bottom: 2px solid #ffffff; } */
+}
+
+/* CodeMirror height fix */
+.cm-editor { height: 100%; }

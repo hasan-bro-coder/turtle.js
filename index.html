@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turtle Editor</title>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo">Turtle<span>JS</span></div>
+      <button id="runBtn">▶ Run</button>
+    </nav>
+
+    <main class="app-container">
+      <div class="side-panel">
+        <div id="editor-container"></div>
+        <div id="console-container">
+          <div class="console-header">Console</div>
+          <div id="console-output"></div>
+        </div>
+      </div>
+      <div id="canvas-wrapper">
+        <canvas id="turtleCanvas"></canvas>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

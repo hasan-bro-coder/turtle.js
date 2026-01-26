@@ -553,7 +553,7 @@ environment
     turtle.sety((args[0] as any).value);
     return MK_NULL();
   })
-  .addBuilitinFunc("setheading", 1, (args: RuntimeVal[]) => {
+  .addBuilitinFunc("angle", 1, (args: RuntimeVal[]) => {
     turtle.setheading((args[0] as any).value);
     return MK_NULL();
   })
@@ -561,8 +561,6 @@ environment
     turtle.home();
     return MK_NULL();
   })
-  
-  // Drawing
   .addBuilitinFunc("circle", 1, (args: RuntimeVal[]) => {
     turtle.circle((args[0] as any).value);
     return MK_NULL();
@@ -583,8 +581,7 @@ environment
     turtle.stamp();
     return MK_NULL();
   })
-  
-  // Pen control
+
   .addBuilitinFunc("penup", 0, () => {
     turtle.penup();
     return MK_NULL();
@@ -593,16 +590,15 @@ environment
     turtle.pendown();
     return MK_NULL();
   })
-  .addBuilitinFunc("pensize", 1, (args: RuntimeVal[]) => {
+  .addBuilitinFunc("size", 1, (args: RuntimeVal[]) => {
     turtle.pensize((args[0] as any).value);
     return MK_NULL();
   })
-  .addBuilitinFunc("pencolor", 1, (args: RuntimeVal[]) => {
+  .addBuilitinFunc("color", 1, (args: RuntimeVal[]) => {
     turtle.pencolor((args[0] as any).value);
     return MK_NULL();
   })
-  
-  // Color control
+ 
   .addBuilitinFunc("fillcolor", 1, (args: RuntimeVal[]) => {
     turtle.fillcolor((args[0] as any).value);
     return MK_NULL();
@@ -629,25 +625,10 @@ environment
     turtle.reset();
     return MK_NULL();
   })
-  
-  // Text
+
   .addBuilitinFunc("write", 1, (args: RuntimeVal[]) => {
     turtle.write(String((args[0] as any).value));
     return MK_NULL();
-  })
-  
-  // State queries
-  .addBuilitinFunc("xcor", 0, () => {
-    return { type: "number", value: turtle.position()[0] } as RuntimeVal;
-  })
-  .addBuilitinFunc("ycor", 0, () => {
-    return { type: "number", value: turtle.position()[1] } as RuntimeVal;
-  })
-  .addBuilitinFunc("heading", 0, () => {
-    return { type: "number", value: turtle.heading() } as RuntimeVal;
-  })
-  .addBuilitinFunc("isdown", 0, () => {
-    return { type: "boolean", value: turtle.isdown() } as RuntimeVal;
   })
 
   .addBuilitinFunc("print", 1, (args: RuntimeVal[]) => {

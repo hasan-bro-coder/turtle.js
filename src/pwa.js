@@ -32,38 +32,38 @@
 //   console.log("PWA was installed");
 //   installBtn.style.display = "none";
 // });
-const requestPermission = async () => {
-  const permission = await Notification.requestPermission();
-  if (permission === "granted") {
-    console.log("Notification permission granted.");
-  } else {
-    console.warn("Notification permission denied.");
-  }
-};
+// const requestPermission = async () => {
+//   const permission = await Notification.requestPermission();
+//   if (permission === "granted") {
+//     console.log("Notification permission granted.");
+//   } else {
+//     console.warn("Notification permission denied.");
+//   }
+// };
 
-// Attach this to your "New" button or a specific "Enable Reminders" button
-requestPermission();
-async function registerPeriodicSync() {
-  const registration = await navigator.serviceWorker.ready;
+// // Attach this to your "New" button or a specific "Enable Reminders" button
+// requestPermission();
+// async function registerPeriodicSync() {
+//   const registration = await navigator.serviceWorker.ready;
 
-  if ("periodicSync" in registration) {
-    try {
-      await registration.periodicSync.register("daily-reminder", {
-        minInterval: 24 * 60 * 60 * 1000,
-      });
-      console.log("Periodic sync registered!");
-    } catch (error) {
-      console.error("Periodic sync could not be registered:", error);
-    }
-  }
-}
+//   if ("periodicSync" in registration) {
+//     try {
+//       await registration.periodicSync.register("daily-reminder", {
+//         minInterval: 24 * 60 * 60 * 1000,
+//       });
+//       console.log("Periodic sync registered!");
+//     } catch (error) {
+//       console.error("Periodic sync could not be registered:", error);
+//     }
+//   }
+// }
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/sw.js")
       .then((reg) => {
         console.log("SW Registered!", reg);
-        registerPeriodicSync();
+        // registerPeriodicSync();
       })
       .catch((err) => console.log("SW Registration failed:", err));
   });

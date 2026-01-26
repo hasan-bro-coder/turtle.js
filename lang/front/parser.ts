@@ -65,7 +65,10 @@ export default class Parser {
   private parse_conditional_expr(): Expr {
     let left = this.parse_logical_expr();
     if (this.err) return {} as Expr;
-    while (this.at().value == "|" || this.at().value == "&" && this.not_eof()) {
+    while (
+      this.at().value == "|" ||
+      (this.at().value == "&" && this.not_eof())
+    ) {
       const operator = this.eat().value;
       const right = this.parse_logical_expr();
       if (this.err) return {} as Expr;
@@ -82,7 +85,12 @@ export default class Parser {
   private parse_logical_expr(): Expr {
     let left = this.parse_additive_expr();
     if (this.err) return {} as Expr;
-    while (this.at().type == TokenType.LogicalOperator && (this.at().value != "&" && this.at().value != "|") && this.not_eof()) {
+    while (
+      this.at().type == TokenType.LogicalOperator &&
+      this.at().value != "&" &&
+      this.at().value != "|" &&
+      this.not_eof()
+    ) {
       const operator = this.eat().value;
       const right = this.parse_additive_expr();
       if (this.err) return {} as Expr;
@@ -282,42 +290,53 @@ export default class Parser {
 
         return { kind: "LoopStmt", condition, body } as LoopStmt;
       }
+      case TokenType.Loop: {
+        this.eat();
+        const name = this.parse_primary_expr();
+        const number = this.parse_expr();
+        if (this.err) return {} as Stmt;
+        const body = this.parse_block_stmt();
+        if (this.err) return {} as Stmt;
 
-        case TokenType.Func: {
-          this.eat();
-          const name = this.expect(
-            TokenType.Identifier,
-          );
+        return {
+          kind: "ForStmt",
+          body,
+          varname: (name as StringLiteral).value,
+          amount: number,
+        } as ForStmt;
+      }
+
+      case TokenType.Func: {
+        this.eat();
+        const name = this.expect(TokenType.Identifier);
+        if (this.err) return {} as Stmt;
+
+        const args: string[] = [];
+
+        this.expect(TokenType.OpenParen);
+        if (this.err) return {} as Stmt;
+
+        while (this.at().type != TokenType.CloseParen && this.not_eof()) {
+          const arg = this.expect(TokenType.Identifier);
           if (this.err) return {} as Stmt;
 
-          const args: string[] = [];
+          args.push(arg.value);
 
-          this.expect(TokenType.OpenParen);
-          if (this.err) return {} as Stmt;
-
-          while (this.at().type != TokenType.CloseParen && this.not_eof()) {
-            const arg = this.expect(
-              TokenType.Identifier,
-            );
-            if (this.err) return {} as Stmt;
-
-            args.push(arg.value);
-
-            if (this.at().type == TokenType.Comma) {
-              this.eat();
-            } else if (this.at().type != TokenType.CloseParen) {
-              this.error("Expected ',' or ')' in parameter list");
-              return {} as Stmt;
-            }
+          if (this.at().type == TokenType.Comma) {
+            this.eat();
+          } else if (this.at().type != TokenType.CloseParen) {
+            this.error("Expected ',' or ')' in parameter list");
+            return {} as Stmt;
           }
-          this.expect(TokenType.CloseParen);
-          if (this.err) return {} as Stmt;
-
-          const body = this.parse_block_stmt();
-          if (this.err) return {} as Stmt;
-
-          return { kind: "FuncStmt", name: name.value, args, body } as FuncStmt;
         }
+        this.expect(TokenType.CloseParen);
+        if (this.err) return {} as Stmt;
+
+        const body = this.parse_block_stmt();
+        if (this.err) return {} as Stmt;
+
+        return { kind: "FuncStmt", name: name.value, args, body } as FuncStmt;
+      }
 
       default:
         return this.parse_expr();

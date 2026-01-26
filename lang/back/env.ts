@@ -1,4 +1,4 @@
-import { FuncVal, MK_NULL, RuntimeVal, StringVal } from "./values.ts";
+import { FuncVal, RuntimeVal, StringVal } from "./values.ts";
 
 export default class Environment {
   public parent?: Environment;

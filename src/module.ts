@@ -11,8 +11,6 @@ export class TurtleCanvas {
     private penColor = "white";
     private penSize = 2;
     private fillColor = "white";
-    private speed = 1;
-    private visible = true;
     
     constructor(canvas: HTMLCanvasElement) {
         this.ctx = canvas.getContext("2d")!;
@@ -27,7 +25,6 @@ export class TurtleCanvas {
         this.penColor = "white";
         this.penSize = 2;
         this.fillColor = "white";
-        this.visible = true;
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
         this.ctx.beginPath();
         this.ctx.moveTo(this.x, this.y);
@@ -103,7 +100,7 @@ export class TurtleCanvas {
         const turnDirection = radius > 0 ? 1 : -1;
         
         // Move to circle start point
-        const startAngle = this.angle + (turnDirection * Math.PI / 2);
+        // const startAngle = this.angle + (turnDirection * Math.PI / 2);
         
         for (let i = 0; i < steps; i++) {
             this.forward(stepLength);
@@ -217,14 +214,6 @@ export class TurtleCanvas {
     towards(x: number, y: number): number {
         const angle = Math.atan2(y - this.y, x - this.x);
         return (angle * 180 / Math.PI) % 360;
-    }
-    
-    showturtle() {
-        this.visible = true;
-    }
-    
-    hideturtle() {
-        this.visible = false;
     }
     
     isdown(): boolean {
@@ -373,18 +362,6 @@ environment
   .addBuilitinFunc("isdown", 0, () => {
     return { type: "boolean", value: turtle.isdown() } as RuntimeVal;
   })
-  
-  // Turtle visibility
-  .addBuilitinFunc("showturtle", 0, () => {
-    turtle.showturtle();
-    return MK_NULL();
-  })
-  .addBuilitinFunc("hideturtle", 0, () => {
-    turtle.hideturtle();
-    return MK_NULL();
-  })
-  
-  // Utility
   .addBuilitinFunc("print", 1, (args: RuntimeVal[]) => {
     //@ts-ignore
     Console.print(`${args[0].value} (${args[0].type})`);

@@ -189,8 +189,8 @@ class Interpreter {
                 return this.eval_if(astNode as IfStmt);
             case "LoopStmt":
                 return this.eval_loop(astNode as LoopStmt);
-            // case "ForStmt":
-            //     return this.eval_for(astNode as ForStmt);
+            case "ForStmt":
+                return this.eval_for(astNode as ForStmt);
             case "FuncStmt":
                 return this.eval_func(astNode as FuncStmt);
             case "FuncExpr":

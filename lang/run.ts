@@ -28,7 +28,13 @@ export function run(code: string) {
   }
   console.log("----------ast---------");
 
-  const result = new Interpreter(env).evaluate(ast);
+  let evaluate = new Interpreter(env);
+  evaluate.evaluate(ast);
+  if (evaluate.err == true) {
+    Console.error("Runtime error: " + evaluate.errMessage);
+    return
+
+  }
 
   console.log("----------result---------");
 }

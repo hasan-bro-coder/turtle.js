@@ -3,8 +3,8 @@ export enum TokenType {
   Number,
   Identifier,
   String,
+  Bool,
   // Keywords
-  Set,
   If,
   Else,
   Loop,
@@ -33,7 +33,6 @@ export enum TokenType {
  * Constant lookup for keywords and known identifiers + symbols.
  */
 const KEYWORDS: Record<string, TokenType> = {
-  set: TokenType.Set,
   if: TokenType.If,
   else: TokenType.Else,
   loop: TokenType.Loop,
@@ -136,8 +135,7 @@ export class Lexer {
         } else {
           this.tokens.push(this.token(this.src.shift(), TokenType.Equals));
         }
-      }  
-      else {
+      } else {
         if (this.isint(this.src[0])) {
           let num = "";
           let hasDot = false;
@@ -171,6 +169,8 @@ export class Lexer {
           const reserved = KEYWORDS[ident];
           if (reserved) {
             this.tokens.push(this.token(ident, reserved));
+          } else if (ident == "true" || ident == "false") {
+            this.tokens.push(this.token(ident, TokenType.Bool));
           } else {
             this.tokens.push(this.token(ident, TokenType.Identifier));
           }
@@ -200,8 +200,7 @@ export class Lexer {
         } else if (this.isskippable(this.src[0])) {
           this.src.shift();
         } else {
-          this.errMessage =
-            "Unreconized character found in source";
+          this.errMessage = "Unreconized character found in source";
           this.err = true;
         }
       }

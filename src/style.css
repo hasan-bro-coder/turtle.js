@@ -28,7 +28,7 @@ body, html {
 .logo { font-weight: bold; letter-spacing: 1px; }
 .logo span { color: var(--accent); }
 
-#runBtn {
+button {
   background: var(--accent);
   color: white;
   border: none;
@@ -38,7 +38,7 @@ body, html {
   font-weight: bold;
 }
 
-#runBtn:active { transform: scale(0.95); }
+button:active { transform: scale(0.95); }
 
 .app-container {
   display: flex;
@@ -63,7 +63,7 @@ body, html {
 }
 
 canvas {
-  background: #000;
+  background: #000000;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 .side-panel {
@@ -137,8 +137,32 @@ canvas {
   #console-container {
     display: none;
   }
-  /* #editor-container { border-right: none; border-bottom: 2px solid #ffffff; } */
+  #editor-container { border-right: none; border-bottom: 2px solid #ffffff; }
+}
+.mobile-only { display: none; }
+
+@media (max-width: 768px) {
+  .mobile-only { display: inline-block; margin-right: 10px; }
+
+  /* When this class is added via JS, the console becomes a modal */
+  #console-container.mobile-show {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40vh;
+    z-index: 1000;
+    background: var(--bg-color);
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    border-top: 3px solid var(--accent);
+    animation: slideUp 0.3s ease-out;
+  }
 }
 
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
 /* CodeMirror height fix */
 .cm-editor { height: 100%; }

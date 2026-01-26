@@ -1,7 +1,6 @@
 import { BooleanVal, FuncVal, MK_NULL, NumberVal, RuntimeVal, StringVal } from "./values.ts";
 import {
     BinaryExpr,
-    BlockStmt,
     ForStmt,
     FuncExpr,
     FuncStmt,
@@ -17,251 +16,190 @@ import {
 } from "../front/ast.ts";
 import Environment from "./env.ts";
 
+class Interpreter {
+    public err: boolean = false;
+    public errMessage: string = "";
+    private globalEnv: Environment;
 
-var err = false;
+    constructor(env: Environment) {
+        this.globalEnv = env;
+    }
 
-export function eval_program(program: Program, env: Environment): RuntimeVal {
-    let lastEvaluated: RuntimeVal = MK_NULL();
-    for (const statement of program.body) {
-        if (err) {
-            break;
+    public eval_program(program: Program): RuntimeVal {
+        let lastEvaluated: RuntimeVal = MK_NULL();
+        for (const statement of program.body) {
+            if (this.err) {
+                break;
+            }
+            lastEvaluated = this.evaluate(statement);
         }
-        lastEvaluated = evaluate(statement, env);
-    }
-    return lastEvaluated;
-}
-
-/**
- * Evaulate pure numeric operations with binary operators.
- */
-function eval_numeric_binary_expr(
-    lhs: NumberVal,
-    rhs: NumberVal,
-    operator: string,
-): NumberVal {
-    let result: number;
-    if (operator == "+") {
-        result = lhs.value + rhs.value;
-    } else if (operator == "-") {
-        result = lhs.value - rhs.value;
-    } else if (operator == "*") {
-        result = lhs.value * rhs.value;
-    } else if (operator == "/") {
-        // TODO: Division by zero checks
-        result = lhs.value / rhs.value;
-    } else {
-        result = lhs.value % rhs.value;
+        return lastEvaluated;
     }
 
-    return { value: result, type: "number" };
-}
-
-function eval_boolean_logical_expr(
-    lhs: NumberVal|BooleanVal,
-    rhs: NumberVal|BooleanVal,
-    operator: string,
-): BooleanVal {
-    let result: boolean = false;
-    if (operator == "==") {
-        result = lhs.value == rhs.value;
-    } else if (operator == ">") {
-        result = lhs.value > rhs.value;
-    } else if (operator == "<") {
-        result = lhs.value < rhs.value;
-    } else if (operator == "!=") {
-        // TODO: Division by zero checks
-        result = lhs.value != rhs.value;
-    } 
-    // else {
-        // result = lhs.value % rhs.value;
-    // }
-
-    return { value: result } as BooleanVal;
-}
-/**
- * Evaulates expressions following the binary operation type.
- */
-function eval_binary_expr(binop: BinaryExpr, env: Environment): RuntimeVal {
-    const lhs = evaluate(binop.left, env);
-    const rhs = evaluate(binop.right, env);
-
-    // Only currently support numeric operations
-    if (lhs.type == "number" && rhs.type == "number") {
-        return eval_numeric_binary_expr(
-            lhs as NumberVal,
-            rhs as NumberVal,
-            binop.operator,
-        );
-    }
-    if (lhs.type == "string" || rhs.type == "string") {
-        let result: string;
-        if (binop.operator == "+") {
-            result = (lhs as StringVal).value + (rhs as StringVal).value;
-        }else{
-            err = true;
-            console.error("String operator not supported", binop.operator);
-            return MK_NULL();
+    private eval_numeric_binary_expr(lhs: NumberVal, rhs: NumberVal, operator: string): NumberVal {
+        let result: number;
+        if (operator == "+") {
+            result = lhs.value + rhs.value;
+        } else if (operator == "-") {
+            result = lhs.value - rhs.value;
+        } else if (operator == "*") {
+            result = lhs.value * rhs.value;
+        } else if (operator == "/") {
+            result = lhs.value / rhs.value;
+        } else {
+            result = lhs.value % rhs.value;
         }
-        return { value: result, type: "string" } as StringVal;
-        // return eval_numeric_binary_expr(
-        //     lhs as StringVal,
-        //     rhs as StringVal,
-        //     binop.operator,
-        // );
+        return { value: result, type: "number" };
     }
 
-    // One or both are NULL
-    return MK_NULL();
-}
-
-function eval_identifier(ident: Identifier, env: Environment): RuntimeVal {
-    const val = env.lookupVar(ident.symbol);
-    return val;
-}
-
-function eval_var(
-    declaration: VarStmt,
-    env: Environment,
-  ): RuntimeVal {
-    const value = declaration.value
-      ? evaluate(declaration.value, env)
-      : MK_NULL();
-    if (env.variables.has(declaration.name)){
-        return env.assignVar(declaration.name, value);
+    private eval_boolean_logical_expr(lhs: NumberVal | BooleanVal, rhs: NumberVal | BooleanVal, operator: string): BooleanVal {
+        let result: boolean = false;
+        if (operator == "==") {
+            result = lhs.value == rhs.value;
+        } else if (operator == ">") {
+            result = lhs.value > rhs.value;
+        } else if (operator == "<") {
+            result = lhs.value < rhs.value;
+        } else if (operator == "!=") {
+            result = lhs.value != rhs.value;
+        }
+        return { value: result } as BooleanVal;
     }
-    return env.declareVar(declaration.name, value);
-  }
 
-function eval_if(ifstmt: IfStmt, env: Environment): RuntimeVal {    
-    const condition = evaluate(ifstmt.condition, env) as BooleanVal;
-    
-    if (condition.value) {
-        return evaluate(ifstmt.body, env);
-    }
-    return MK_NULL();
-}
+    private eval_binary_expr(binop: BinaryExpr): RuntimeVal {
+        const lhs = this.evaluate(binop.left);
+        const rhs = this.evaluate(binop.right);
 
-function eval_loop(stmt: LoopStmt, env: Environment): RuntimeVal {
-    let condition = evaluate(stmt.condition, env) as BooleanVal;
-    let result: RuntimeVal = MK_NULL();
-    while(condition.value) {
-        result = evaluate(stmt.body, env);
-        // console.log("Loop body", result);
-        
-        condition = evaluate(stmt.condition, env) as BooleanVal;
-        // console.log("Loop condition", condition.value);
-        
-    }
-    return result;
-}
+        if (lhs.type == "number" && rhs.type == "number") {
+            return this.eval_numeric_binary_expr(lhs as NumberVal, rhs as NumberVal, binop.operator);
+        }
+        if (lhs.type == "string" || rhs.type == "string") {
+            let result: string;
+            if (binop.operator == "+") {
+                result = (lhs as StringVal).value + (rhs as StringVal).value;
+            } else {
+                this.err = true;
+                this.errMessage = "String operator not supported "+ binop.operator;
+                return MK_NULL();
+            }
+            return { value: result, type: "string" } as StringVal;
+        }
 
-function eval_for(stmt: ForStmt, env: Environment): RuntimeVal {
-    let condition = evaluate(stmt.amount, env) as NumberVal;
-    let result: RuntimeVal = MK_NULL();
-    let i = 0
-    env.declareVar(stmt.varname, {value: i, type: "number"} as NumberVal)
-    while(i < condition.value) {
-        i++;
-        result = evaluate(stmt.body, env);
-        env.assignVar(stmt.varname, {value: i, type: "number"} as NumberVal)
-    }
-    return result;
-}
-
-function eval_func_run(stmt: FuncExpr, env: Environment): RuntimeVal {
-    let func = env.getFunc(stmt.funcname)
-    if (func.builtin && func.run) {
-        const evaluatedArgs = stmt.props.map(arg => evaluate(arg, env));
-        return func.run(evaluatedArgs);
-    }
-    if (func.args.length != stmt.props.length) {
-        console.error(`Function ${stmt.funcname} expected ${func.args.length} arguments but got ${stmt.props.length}.`);
-        err = true;
         return MK_NULL();
     }
-    func.args.forEach((arg, index) => {
-        env.declareVar(arg, evaluate(stmt.props[index], env));
-    });
-    return evaluate(func.body, env);
-}
 
-
-function eval_func(stmt: FuncStmt, env: Environment): RuntimeVal {
-    env.setFunc({type: "function",name:stmt.name,body:stmt.body,args: stmt.args,builtin: false} as FuncVal)
-    // let result: RuntimeVal = MK_NULL();
-    // while(condition.value) {
-    // let result = evaluate(stmt.body, env);
-
-        
-        // condition = evaluate(stmt.condition, env) as BooleanVal;
-        
-    // }
-    return MK_NULL();
-}
-
-let new_env = true;
-function eval_body(body: BlockStmt, env: Environment): RuntimeVal {
-    let scope: Environment 
-    // = new Environment(env);
-    if (new_env) {
-      scope = new Environment(env);
-    } else {
-      scope = env;
+    private eval_identifier(ident: Identifier): RuntimeVal {
+        const val = this.globalEnv.lookupVar(ident.symbol);
+        return val;
     }
-    let result: RuntimeVal = MK_NULL();
-    for (const stmt of body.body) {
-    //   if (!this.return) {
-        result = evaluate(stmt, scope);
-    //   }
-    }
-    return result;
-  }
 
-export function evaluate(astNode: Stmt, env: Environment): RuntimeVal {
-    switch (astNode.kind) {
-        case "NumericLiteral":
-            return {
-                value: ((astNode as NumericLiteral).value),
-                type: "number",
-            } as NumberVal;
-        case "StringLiteral":
-            return {
-                value: ((astNode as StringLiteral).value),
-                type: "string",
-            } as StringVal;
-        case "Identifier":
-            return eval_identifier(astNode as Identifier, env);
-        case "BinaryExpr":
-            return eval_binary_expr(astNode as BinaryExpr, env);
-        case "Program":
-            return eval_program(astNode as Program, env);
-        case "LogicalExpr":
-            return eval_boolean_logical_expr(
-                evaluate((astNode as LogicalExpr).left, env) as NumberVal | BooleanVal,
-                evaluate((astNode as LogicalExpr).right, env) as NumberVal | BooleanVal,
-                (astNode as LogicalExpr).operator,
-            );
-        case "VarStmt":
-            return eval_var(astNode as VarStmt, env);
-        case "IfStmt":
-            return eval_if(astNode as IfStmt, env);
-        case "BlockStmt":
-            return eval_body(astNode as BlockStmt, env);
-        case "LoopStmt":
-            return eval_loop(astNode as LoopStmt, env);
-        case "ForStmt":
-            return eval_for(astNode as ForStmt, env);
-        case "FuncStmt":
-            return eval_func(astNode as FuncStmt, env);
-        case "FuncExpr":
-            return eval_func_run(astNode as FuncExpr, env);
-        // Handle unimplimented ast types as error.
-        default:
-            console.error(
-                "This AST Node has not yet been setup for interpretation.",
-                astNode,
-            );
-            // Deno.exit(0);
+    private eval_var(declaration: VarStmt): RuntimeVal {
+        const value = declaration.value ? this.evaluate(declaration.value) : MK_NULL();
+        if (this.globalEnv.variables.has(declaration.name)) {
+            return this.globalEnv.assignVar(declaration.name, value);
+        }
+        return this.globalEnv.declareVar(declaration.name, value);
+    }
+
+    private eval_if(ifstmt: IfStmt): RuntimeVal {
+        const condition = this.evaluate(ifstmt.condition) as BooleanVal;
+        if (condition.value) {
+            return this.evaluate_body(ifstmt.body);
+        }
+        return MK_NULL();
+    }
+
+    private eval_loop(stmt: LoopStmt): RuntimeVal {
+        let condition = this.evaluate(stmt.condition) as BooleanVal;
+        let result: RuntimeVal = MK_NULL();
+        while (condition.value) {
+            result = this.evaluate_body(stmt.body);
+            condition = this.evaluate(stmt.condition) as BooleanVal;
+        }
+        return result;
+    }
+
+    private eval_for(stmt: ForStmt): RuntimeVal {
+        let condition = this.evaluate(stmt.amount) as NumberVal;
+        let result: RuntimeVal = MK_NULL();
+        let i = 0;
+        this.globalEnv.declareVar(stmt.varname, { value: i, type: "number" } as NumberVal);
+        while (i < condition.value) {
+            i++;
+            result = this.evaluate_body(stmt.body);
+            this.globalEnv.assignVar(stmt.varname, { value: i, type: "number" } as NumberVal);
+        }
+        return result;
+    }
+
+    private eval_func_run(stmt: FuncExpr): RuntimeVal {
+        let func = this.globalEnv.getFunc(stmt.funcname);
+        if (func.builtin && func.run) {
+            const evaluatedArgs = stmt.props.map(arg => this.evaluate(arg));
+            return func.run(evaluatedArgs);
+        }
+        if (func.args.length != stmt.props.length) {
+            this.errMessage = `Function ${stmt.funcname} expected ${func.args.length} arguments but got ${stmt.props.length}.`;
+            this.err = true;
             return MK_NULL();
+        }
+        func.args.forEach((arg, index) => {
+            this.globalEnv.declareVar(arg, this.evaluate(stmt.props[index]));
+        });
+        return this.evaluate_body(func.body);
+    }
+
+    private eval_func(stmt: FuncStmt): RuntimeVal {
+        this.globalEnv.setFunc({ type: "function", name: stmt.name, body: stmt.body, args: stmt.args, builtin: false } as FuncVal);
+        return MK_NULL();
+    }
+
+    private evaluate_body(astNode: Stmt[]): RuntimeVal {
+        let result: RuntimeVal = MK_NULL();
+        for (const stmt of astNode) {
+            if (this.err) {
+                break;
+            }
+            result = this.evaluate(stmt);
+        }
+        return result;
+    }
+
+    public evaluate(astNode: Stmt): RuntimeVal {
+        switch (astNode.kind) {
+            case "NumericLiteral":
+                return { value: ((astNode as NumericLiteral).value), type: "number" } as NumberVal;
+            case "StringLiteral":
+                return { value: ((astNode as StringLiteral).value), type: "string" } as StringVal;
+            case "Identifier":
+                return this.eval_identifier(astNode as Identifier);
+            case "BinaryExpr":
+                return this.eval_binary_expr(astNode as BinaryExpr);
+            case "Program":
+                return this.eval_program(astNode as Program);
+            case "LogicalExpr":
+                return this.eval_boolean_logical_expr(
+                    this.evaluate((astNode as LogicalExpr).left) as NumberVal | BooleanVal,
+                    this.evaluate((astNode as LogicalExpr).right) as NumberVal | BooleanVal,
+                    (astNode as LogicalExpr).operator,
+                );
+            case "VarStmt":
+                return this.eval_var(astNode as VarStmt);
+            case "IfStmt":
+                return this.eval_if(astNode as IfStmt);
+            case "LoopStmt":
+                return this.eval_loop(astNode as LoopStmt);
+            // case "ForStmt":
+            //     return this.eval_for(astNode as ForStmt);
+            case "FuncStmt":
+                return this.eval_func(astNode as FuncStmt);
+            case "FuncExpr":
+                return this.eval_func_run(astNode as FuncExpr);
+            default:
+                this.errMessage = "This AST Node has not yet been setup for interpretation " + astNode;
+                return MK_NULL();
+        }
     }
 }
+
+export default Interpreter;

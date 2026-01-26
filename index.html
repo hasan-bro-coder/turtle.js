@@ -3,11 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="manifest.json">
     <title>Turtle Editor</title>
   </head>
   <body>
     <nav class="navbar">
       <div class="logo">Turtle<span>JS</span></div>
+      <button id="consoleToggleBtn" class="mobile-only">⌨ Console</button>
       <button id="runBtn">▶ Run</button>
     </nav>
 
@@ -25,5 +27,7 @@
     </main>
 
     <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/module.ts"></script>
+    <script async src="/src/pwa.js"></script>
   </body>
 </html>

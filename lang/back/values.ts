@@ -1,14 +1,12 @@
-import { BlockStmt } from "../front/ast";
+import { Stmt } from "../front/ast";
 
 export type ValueType = "null" | "number" | "boolean" | "function" | "string";
 
 export interface RuntimeVal {
   type: ValueType;
+  value: null | boolean | number | string
 }
 
-/**
- * Defines a value of undefined meaning
- */
 export interface NullVal extends RuntimeVal {
   type: "null";
   value: null;
@@ -27,9 +25,6 @@ export function MK_BOOL(b = true) {
   return { type: "boolean", value: b } as BooleanVal;
 }
 
-/**
- * Runtime value that has access to the raw native javascript number.
- */
 export interface NumberVal extends RuntimeVal {
   type: "number";
   value: number;
@@ -52,9 +47,10 @@ export interface FuncVal extends RuntimeVal {
   type: "function";
   name: string;
   args: string[];
-  body: BlockStmt;
+  body: Stmt[];
   builtin: boolean;
   run?: (args: RuntimeVal[]) => RuntimeVal;
+  value: null
 }
 
 // export function MK_FUNC(name: string, body: BlockStmt): FuncVal {

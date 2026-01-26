@@ -7,9 +7,14 @@ import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { run } from "../lang/run";
 import Console from './console';
+import { turtle } from "./module";
 
 let startState = EditorState.create({
-  doc: `forward 100\nright 90\nforward 100`,
+  doc: 
+`print "Hello, World"
+forward 100
+right 90
+forward 100`,
   extensions: [
     oneDark,
     keymap.of(defaultKeymap),
@@ -36,10 +41,33 @@ window.addEventListener("resize", resize);
 resize();
 
 
+
+const consoleBtn = document.getElementById('consoleToggleBtn') as HTMLButtonElement;
+const consoleContainer = document.getElementById('console-container') as HTMLDivElement;
+const consoleHeader = document.querySelector('.console-header') as HTMLDivElement;
+
+
+consoleBtn.addEventListener('click', () => {
+  consoleContainer.classList.toggle('mobile-show');
+  if (consoleContainer.classList.contains('mobile-show')) {
+    consoleBtn.textContent = "✖ Close";
+  } else {
+    consoleBtn.textContent = "⌨ Console";
+  }
+});
+consoleHeader.addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    consoleContainer.classList.remove('mobile-show');
+    consoleBtn.textContent = "⌨ Console";
+  }
+});
+
+
 document
   .querySelector<HTMLButtonElement>("#runBtn")
   ?.addEventListener("click", () => {
     const code = editor.state.doc.toString();
-    run(code+"\n")
+    turtle.reset();
+    run(code+"\n");
     console.log(code);
   });

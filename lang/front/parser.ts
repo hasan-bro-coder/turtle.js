@@ -13,6 +13,7 @@ import {
   Stmt,
   ForStmt,
   StringLiteral,
+  BoolLiteral,
 } from "./ast.ts";
 
 import { Token, TokenType } from "./lexer.ts";
@@ -159,6 +160,11 @@ export default class Parser {
           kind: "StringLiteral",
           value: this.eat().value,
         } as StringLiteral;
+      case TokenType.Bool:
+        return {
+          kind: "BoolLiteral",
+          value: this.eat().value == "true" ? true : false,
+        } as BoolLiteral;
       case TokenType.OpenParen: {
         this.eat();
         const value = this.parse_expr();

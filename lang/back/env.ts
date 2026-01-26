@@ -16,13 +16,6 @@ export default class Environment {
 
   public builtins(){
     this
-    .addBuilitinFunc("log", 1, (args: RuntimeVal[]) => {
-      // @ts-ignore
-      console.log(`${args[0].value} (${args[0].type})`);
-      // console.log(args[0].value);
-
-      return MK_NULL();
-    })
     .addBuilitinFunc("join", 2, (args: RuntimeVal[]) => {
       // @ts-ignore
       return {value: args[0].value + args[1].value, type: "string"} as StringVal;
@@ -38,9 +31,10 @@ export default class Environment {
       type: "function",
       name,
       args: new Array(args).fill("arg"),
-      body: { kind: "BlockStmt", body: [] },
+      body: [],
       builtin: true,
       run,
+      value: null
     } as FuncVal);
     return this;
   }

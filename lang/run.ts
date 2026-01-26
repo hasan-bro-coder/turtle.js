@@ -2,11 +2,12 @@ import Console from "../src/console.ts";
 import type { Program } from "./front/ast.ts";
 import { Lexer } from "./front/lexer.ts";
 import Parser from "./front/parser.ts";
-
+import Interpreter from "./back/interpret.ts";
+import { env } from "../src/module.ts";
 export function run(code: string) {
   let lexer = new Lexer(code);
   let tokens = lexer.tokenize();
-  Console.print(JSON.stringify(tokens,null,4));
+  // Console.print(JSON.stringify(tokens,null,4));
   if (lexer.err == true) {
     Console.error("Lexer error: " + lexer.errMessage);
     return;
@@ -27,23 +28,12 @@ export function run(code: string) {
   }
   console.log("----------ast---------");
 
+  const result = new Interpreter(env).evaluate(ast);
+
+  console.log("----------result---------");
 }
 
-run(`
-is_valid = (x > 10) & (y < 20 | (z != 0))
-multiplier = 1.5
-
-if is_valid == 1 & (speed * multiplier) > (base + 50 / 2) do
-    set_status "Running"
-    loop count < (max / 2) + 1 do
-        forward 10
-        count = count + (1 * 1)
-    end
-end
-else do
-    stop_engine
-end
-`);
+// run(``);
 
 // import Parser from "./front/parser.ts";
 // import Environment from "./back/env.ts";

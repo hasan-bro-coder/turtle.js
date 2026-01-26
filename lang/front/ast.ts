@@ -8,6 +8,7 @@ export type NodeType =
   | "FuncStmt"
   | "NumericLiteral"
   | "StringLiteral"
+  | "BoolLiteral"
   | "Identifier"
   | "FuncExpr"
   | "BinaryExpr"
@@ -122,4 +123,8 @@ export interface NumericLiteral extends Expr {
 export interface StringLiteral extends Expr {
   kind: "StringLiteral";
   value: string;
+}
+export interface BoolLiteral extends Expr {
+  kind: "BoolLiteral";
+  value: boolean;
 }

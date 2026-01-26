@@ -290,7 +290,7 @@ export default class Parser {
 
         return { kind: "LoopStmt", condition, body } as LoopStmt;
       }
-      case TokenType.Loop: {
+      case TokenType.For: {
         this.eat();
         const name = this.parse_primary_expr();
         const number = this.parse_expr();

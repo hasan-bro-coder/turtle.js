@@ -9,23 +9,37 @@ import { run } from "../lang/run";
 import Console from './console';
 import { turtle } from "./module";
 
+const STORAGE_KEY = "turtle_js_code_autosave";
+const getSavedCode = (): string => {
+  return localStorage.getItem(STORAGE_KEY) || `forward 100\nright 90\nforward 100`;
+};
+const autoSaveExtension = EditorView.updateListener.of((update) => {
+  if (update.docChanged) {
+    const code = update.state.doc.toString();
+    localStorage.setItem(STORAGE_KEY, code);
+    console.log("Saved to local storage");
+  }
+});
+
 let startState = EditorState.create({
-  doc: 
+  doc: getSavedCode() ||
 `print "Hello, World"
 forward 100
 right 90
-forward 100`,
+forward 100` ,
   extensions: [
     oneDark,
     keymap.of(defaultKeymap),
     basicSetup,
     javascript(),
+    autoSaveExtension,
   ],
 });
 const editor = new EditorView({
   state: startState,
   parent: document.querySelector("#editor-container")!,
 });
+
 
 Console.initialize('console-output');
 const canvas = document.getElementById("turtleCanvas") as HTMLCanvasElement;

@@ -181,6 +181,15 @@ export default class Parser {
         if (this.err) return {} as Expr;
         return value;
       }
+      case TokenType.OpenBrack: {
+        this.eat();
+        console.log("yo");
+        const value = this.parse_func_call();
+        if (this.err) return {} as Expr;
+        this.expect(TokenType.CloseBrack);
+        if (this.err) return {} as Expr;
+        return value;
+      }
       default:
         this.error(`Unexpected token in expression: ${TokenType[tk]}`);
         return {} as Expr;
@@ -191,7 +200,7 @@ export default class Parser {
     const funcname = this.eat().value;
     const args: Expr[] = [];
 
-    while (this.not_eof() && this.at().type != TokenType.Line) {
+    while (this.not_eof() && this.at().type != TokenType.Line && this.at().type != TokenType.CloseBrack) {
       const arg = this.parse_expr();
       if (this.err) return {} as Expr;
 
@@ -203,7 +212,6 @@ export default class Parser {
         break;
       }
     }
-    this.expect(TokenType.Line);
     return { kind: "FuncExpr", funcname, props: args } as FuncExpr;
   }
 
@@ -254,7 +262,9 @@ export default class Parser {
             value,
           } as VarStmt;
         } else {
-          return this.parse_func_call();
+          let val = this.parse_func_call();
+          this.expect(TokenType.Line);
+          return val;
         }
       }
 

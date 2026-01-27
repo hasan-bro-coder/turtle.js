@@ -393,7 +393,7 @@ private drawTurtle() {
 
   circle(radius: number, extent: number = 360, steps?: number) {
     if (!steps) {
-      steps = Math.max(12, Math.floor(Math.abs(radius) / 2));
+      steps = Math.max(24, Math.floor(Math.abs(radius)));
     }
     const duration = Math.abs(extent) * 5; // 5ms per degree
     this.enqueue({ type: "circle", args: [radius, extent, steps], duration });

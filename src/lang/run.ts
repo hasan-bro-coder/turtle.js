@@ -1,15 +1,16 @@
-import Console from "../src/console.ts";
+import Console from "../console.ts";
 import type { Program } from "./front/ast.ts";
 import { Lexer } from "./front/lexer.ts";
 import Parser from "./front/parser.ts";
 import Interpreter from "./back/interpret.ts";
 import Environment from "./back/env.ts";
 // let env
-import { env } from "../src/module.ts";
+import { env } from "../module.ts";
 export function run(code: string) {
   let lexer = new Lexer(code);
   let tokens = lexer.tokenize();
-  console.log(tokens)
+  console.log(tokens);
+  Console.print(JSON.stringify(tokens,null,2));
   if (lexer.err == true) {
     Console.error("Lexer error: " + lexer.errMessage);
     return;
@@ -22,7 +23,7 @@ export function run(code: string) {
   let parser = new Parser();
   ast = parser.produceAST(tokens);
   console.dir(ast);
-
+  Console.print(JSON.stringify(ast,null,2))
   if (parser.err == true) {
     Console.error("Parser error: " + parser.errMessage);
     return
@@ -41,7 +42,11 @@ export function run(code: string) {
   console.log("----------result---------");
 }
 
-// run(`fowrward -1
+// run(`
+// fn sum() do
+//  1+1
+// end
+// print [sum]
 // `);
 
 // import Parser from "./front/parser.ts";

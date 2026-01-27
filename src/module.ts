@@ -1,8 +1,7 @@
-import Environment from "../lang/back/env";
-import { MK_NULL, RuntimeVal } from "../lang/back/values";
+import Environment from "./lang/back/env";
+import { MK_NULL, MK_NUMBER, RuntimeVal } from "./lang/back/values";
 import { TurtleCanvas } from "./canvas";
 import Console from "./console";
-
 
 const drawCanvasEl = document.getElementById(
   "turtleCanvas",
@@ -75,11 +74,11 @@ environment
     return MK_NULL();
   })
 
-  .addBuilitinFunc("penup", 0, () => {
+  .addBuilitinFunc("pup", 0, () => {
     turtle.penup();
     return MK_NULL();
   })
-  .addBuilitinFunc("pendown", 0, () => {
+  .addBuilitinFunc("pdown", 0, () => {
     turtle.pendown();
     return MK_NULL();
   })
@@ -87,7 +86,7 @@ environment
     turtle.pensize((args[0] as any).value);
     return MK_NULL();
   })
-  .addBuilitinFunc("pencolor", 1, (args: RuntimeVal[]) => {
+  .addBuilitinFunc("pcolor", 1, (args: RuntimeVal[]) => {
     turtle.pencolor((args[0] as any).value);
     return MK_NULL();
   })
@@ -100,11 +99,11 @@ environment
     turtle.color((args[0] as any).value);
     return MK_NULL();
   })
-  .addBuilitinFunc("begin_fill", 0, () => {
+  .addBuilitinFunc("bfill", 0, () => {
     turtle.begin_fill();
     return MK_NULL();
   })
-  .addBuilitinFunc("end_fill", 0, () => {
+  .addBuilitinFunc("efill", 0, () => {
     turtle.end_fill();
     return MK_NULL();
   })
@@ -139,6 +138,64 @@ environment
     turtle.showturtle();
     return MK_NULL();
   })
+  //math
+  .addBuilitinFunc("rad", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: ((args[0] as any).value * Math.PI) / 180 };
+  })
+  .addBuilitinFunc("deg", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: ((args[0] as any).value * 180) / Math.PI };
+  })
+  .addBuilitinFunc("abs", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.abs((args[0] as any).value) };
+  })
+  .addBuilitinFunc("sqrt", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.sqrt((args[0] as any).value) };
+  })
+  .addBuilitinFunc("pow", 2, (args: RuntimeVal[]) => {
+    return {
+      type: "number",
+      value: Math.pow((args[0] as any).value, (args[1] as any).value),
+    };
+  })
+  .addBuilitinFunc("round", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.round((args[0] as any).value) };
+  })
+  .addBuilitinFunc("floor", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.floor((args[0] as any).value) };
+  })
+  .addBuilitinFunc("ceil", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.ceil((args[0] as any).value) };
+  })
+  .addBuilitinFunc("sin", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.sin((args[0] as any).value) };
+  })
+  .addBuilitinFunc("cos", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.cos((args[0] as any).value) };
+  })
+  .addBuilitinFunc("tan", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.tan((args[0] as any).value) };
+  })
+  .addBuilitinFunc("asin", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.asin((args[0] as any).value) };
+  })
+  .addBuilitinFunc("acos", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.acos((args[0] as any).value) };
+  })
+  .addBuilitinFunc("atan", 1, (args: RuntimeVal[]) => {
+    return { type: "number", value: Math.atan((args[0] as any).value) };
+  })
+  .addBuilitinFunc("max", 2, (args: RuntimeVal[]) => {
+    return {
+      type: "number",
+      value: Math.max((args[0] as any).value, (args[1] as any).value),
+    };
+  })
+  .addBuilitinFunc("min", 2, (args: RuntimeVal[]) => {
+    return {
+      type: "number",
+      value: Math.min((args[0] as any).value, (args[1] as any).value),
+    };
+  })
 
   .addBuilitinFunc("print", 1, (args: RuntimeVal[]) => {
     //@ts-ignore
@@ -146,6 +203,9 @@ environment
     console.log(`${args[0].value} (${args[0].type})`);
 
     return MK_NULL();
-  });
+  })
+  
+  
+  environment.assignVar("PI",MK_NUMBER(Math.PI));
 
 export const env = environment;

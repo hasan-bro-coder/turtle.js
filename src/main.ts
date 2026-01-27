@@ -5,7 +5,7 @@ import { basicSetup } from "codemirror";
 import { defaultKeymap } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { run } from "../lang/run";
+import { run } from "./lang/run";
 import Console from "./console";
 import { turtle } from "./module";
 

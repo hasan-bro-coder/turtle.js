@@ -3,7 +3,8 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { defaultKeymap } from "@codemirror/commands";
-import { javascript } from "@codemirror/lang-javascript";
+// import { javascript } from "@codemirror/lang-javascript";
+import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { run } from "./lang/run";
 import Console from "./console";
@@ -34,7 +35,7 @@ forward 100`,
     oneDark,
     keymap.of(defaultKeymap),
     basicSetup,
-    javascript(),
+    python(),
     autoSaveExtension,
   ],
 });
@@ -87,6 +88,8 @@ consoleHeader.addEventListener("click", () => {
   }
 });
 
+
+
 document
   .querySelector<HTMLButtonElement>("#runBtn")
   ?.addEventListener("click", () => {
@@ -95,3 +98,12 @@ document
     run(code + "\n");
     console.log(code);
   });
+
+window.addEventListener("keydown", (event) => {
+  if (event.altKey && event.key === "r") {
+    const code = editor.state.doc.toString();
+    turtle.reset();
+    run(code + "\n");
+    console.log(code);
+  }
+});

@@ -1,90 +1,96 @@
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
+
 interface Command {
-  type: string;
+  type: CommandType;
   args: any[];
-  duration: number; // milliseconds
+  duration: number;
 }
 
-export class TurtleCanvas {
-  private drawCtx: CanvasRenderingContext2D; // For permanent drawings
-  private cursorCtx: CanvasRenderingContext2D; // For the cursor
-  private x = 0;
-  private y = 0;
-  private angle = -Math.PI / 2; // Default: Pointing Up
-  private penDown = true;
-  private penColor = "white";
-  private penSize = 2;
-  private fillColor = "white";
+type CommandType =
+  | "forward"
+  | "backward"
+  | "right"
+  | "left"
+  | "goto"
+  | "angle"
+  | "circle" 
+  | "penup"
+  | "pendown"
+  | "pensize"
+  | "pencolor"
+  | "fillcolor"
+  | "color"
+  | "begin_fill"
+  | "end_fill"
+  | "dot"
+  | "stamp"
+  | "clear"
+  | "write"
+  | "instant";
 
-  // Animation state
+interface TurtleState {
+  x: number;
+  y: number;
+  angle: number;
+  penDown: boolean;
+  penColor: string;
+  penSize: number;
+  fillColor: string;
+}
+
+interface AnimationState {
+  startX: number;
+  startY: number;
+  startAngle: number;
+  targetX: number;
+  targetY: number;
+  targetAngle: number;
+}
+
+// ============================================================================
+// ANIMATION HANDLER
+// ============================================================================
+
+class AnimationHandler {
   private commandQueue: Command[] = [];
   private isAnimating = false;
-  private animationSpeed = 1; // multiplier for animation speed
-  private showTurtle = true;
-  private turtleSize = 15;
-
-  // For smooth animations
   private currentCommand: Command | null = null;
   private commandProgress = 0;
   private commandStartTime = 0;
+  private animationSpeed = 1;
 
-  // Stored state for animations
-  private startX = 0;
-  private startY = 0;
-  private startAngle = 0;
-  private targetX = 0;
-  private targetY = 0;
-  private targetAngle = 0;
+  constructor(
+    private executor: CommandExecutor,
+    private renderer: TurtleRenderer,
+  ) {}
 
-  // Fill path tracking
-  private fillPath: [number, number][] = [];
-  private isFilling = false;
-
-  constructor(drawCanvas: HTMLCanvasElement, cursorCanvas: HTMLCanvasElement) {
-    this.drawCtx = drawCanvas.getContext("2d")!;
-    this.cursorCtx = cursorCanvas.getContext("2d")!;
-    this.reset();
-  }
-
-  reset() {
-    this.x = this.drawCtx.canvas.width / 2;
-    this.y = this.drawCtx.canvas.height / 2;
-    this.angle = -Math.PI / 2;
-    this.penDown = true;
-    this.penColor = "white";
-    this.penSize = 2;
-    this.fillColor = "white";
-    this.commandQueue = [];
-    this.isAnimating = false;
-    this.currentCommand = null;
-    this.fillPath = [];
-    this.isFilling = false;
-    this.drawCtx.clearRect(
-      0,
-      0,
-      this.drawCtx.canvas.width,
-      this.drawCtx.canvas.height,
-    );
-    this.cursorCtx.clearRect(
-      0,
-      0,
-      this.cursorCtx.canvas.width,
-      this.cursorCtx.canvas.height,
-    );
-    this.drawTurtle();
-  }
-
-  // Queue management
-  private enqueue(command: Command) {
+  enqueue(command: Command): void {
     this.commandQueue.push(command);
     if (!this.isAnimating) {
       this.processQueue();
     }
   }
 
-  private processQueue() {
+  setSpeed(speed: number): void {
+    if (speed === 0) {
+      this.animationSpeed = Infinity;
+    } else {
+      this.animationSpeed = speed / 5;
+    }
+  }
+
+  clear(): void {
+    this.commandQueue = [];
+    this.isAnimating = false;
+    this.currentCommand = null;
+  }
+
+  private processQueue(): void {
     if (this.commandQueue.length === 0) {
       this.isAnimating = false;
-      this.drawTurtle(); // Ensure turtle is drawn at the end
+      this.renderer.drawTurtle();
       return;
     }
 
@@ -93,52 +99,11 @@ export class TurtleCanvas {
     this.commandProgress = 0;
     this.commandStartTime = Date.now();
 
-    // Setup command-specific initial states
-    this.setupCommand(this.currentCommand);
-
-    // Start animation loop
+    this.executor.setup(this.currentCommand);
     this.animate();
   }
 
-  private setupCommand(command: Command) {
-    switch (command.type) {
-      case "forward":
-      case "backward":
-        this.startX = this.x;
-        this.startY = this.y;
-        const dist = command.args[0];
-        this.targetX = this.x + Math.cos(this.angle) * dist;
-        this.targetY = this.y + Math.sin(this.angle) * dist;
-        break;
-
-      case "right":
-      case "left":
-        this.startAngle = this.angle;
-        this.targetAngle = this.angle + command.args[0];
-        break;
-
-      case "goto":
-        this.startX = this.x;
-        this.startY = this.y;
-        this.targetX = command.args[0];
-        this.targetY = command.args[1];
-        break;
-
-      case "setheading":
-        this.startAngle = this.angle;
-        this.targetAngle = command.args[0];
-        break;
-
-      case "circle":
-        // Store circle parameters
-        this.startX = this.x;
-        this.startY = this.y;
-        this.startAngle = this.angle;
-        break;
-    }
-  }
-
-  private animate() {
+  private animate(): void {
     if (!this.currentCommand) {
       this.processQueue();
       return;
@@ -148,31 +113,16 @@ export class TurtleCanvas {
     const adjustedDuration = this.currentCommand.duration / this.animationSpeed;
     this.commandProgress = Math.min(elapsed / adjustedDuration, 1);
 
-    // Easing function for smooth motion
-    const ease = this.easeInOutQuad(this.commandProgress);
+    const easedProgress = this.easeInOutQuad(this.commandProgress);
 
-    // Clear cursor canvas every frame
-    this.cursorCtx.clearRect(
-      0,
-      0,
-      this.cursorCtx.canvas.width,
-      this.cursorCtx.canvas.height,
-    );
+    this.renderer.clearCursor();
+    this.executor.execute(this.currentCommand, easedProgress);
+    this.renderer.drawTurtle();
 
-    // Execute animation based on command type
-    this.executeAnimationFrame(this.currentCommand, ease);
-
-    // Draw the turtle on cursor canvas
-    if (this.showTurtle) {
-      this.drawTurtle();
-    }
-
-    // Continue or finish
     if (this.commandProgress < 1) {
       requestAnimationFrame(() => this.animate());
     } else {
-      // Finalize command
-      this.finalizeCommand(this.currentCommand);
+      this.executor.finalize(this.currentCommand);
       this.currentCommand = null;
       this.processQueue();
     }
@@ -181,389 +131,687 @@ export class TurtleCanvas {
   private easeInOutQuad(t: number): number {
     return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   }
+}
 
-  private executeAnimationFrame(command: Command, progress: number) {
+// ============================================================================
+// COMMAND EXECUTOR
+// ============================================================================
+
+class CommandExecutor {
+  private animState: AnimationState = {
+    startX: 0,
+    startY: 0,
+    startAngle: 0,
+    targetX: 0,
+    targetY: 0,
+    targetAngle: 0,
+  };
+
+  constructor(
+    private state: TurtleState,
+    private drawer: CanvasDrawer,
+    private fillManager: FillManager,
+  ) {}
+
+  setup(command: Command): void {
     switch (command.type) {
       case "forward":
       case "backward":
-        const currentX = this.startX + (this.targetX - this.startX) * progress;
-        const currentY = this.startY + (this.targetY - this.startY) * progress;
-
-        if (this.penDown) {
-          this.drawCtx.beginPath();
-          this.drawCtx.moveTo(this.startX, this.startY);
-          this.drawCtx.lineTo(currentX, currentY);
-          this.drawCtx.strokeStyle = this.penColor;
-          this.drawCtx.lineWidth = this.penSize;
-          this.drawCtx.stroke();
-        }
-
-        this.x = currentX;
-        this.y = currentY;
+        this.animState.startX = this.state.x;
+        this.animState.startY = this.state.y;
+        const dist = command.args[0];
+        this.animState.targetX =
+          this.state.x + Math.cos(this.state.angle) * dist;
+        this.animState.targetY =
+          this.state.y + Math.sin(this.state.angle) * dist;
         break;
 
       case "right":
       case "left":
-        this.angle =
-          this.startAngle + (this.targetAngle - this.startAngle) * progress;
+        this.animState.startAngle = this.state.angle;
+        this.animState.targetAngle = this.state.angle + command.args[0];
         break;
 
       case "goto":
-        const gotoX = this.startX + (this.targetX - this.startX) * progress;
-        const gotoY = this.startY + (this.targetY - this.startY) * progress;
-
-        if (this.penDown) {
-          this.drawCtx.beginPath();
-          this.drawCtx.moveTo(this.startX, this.startY);
-          this.drawCtx.lineTo(gotoX, gotoY);
-          this.drawCtx.strokeStyle = this.penColor;
-          this.drawCtx.lineWidth = this.penSize;
-          this.drawCtx.stroke();
-        }
-
-        this.x = gotoX;
-        this.y = gotoY;
+        this.animState.startX = this.state.x;
+        this.animState.startY = this.state.y;
+        this.animState.targetX = command.args[0];
+        this.animState.targetY = command.args[1];
         break;
 
-      case "setheading":
-        this.angle =
-          this.startAngle + (this.targetAngle - this.startAngle) * progress;
+      case "angle":
+        this.animState.startAngle = this.state.angle;
+        this.animState.targetAngle = command.args[0];
         break;
 
       case "circle":
-        this.executeCircleAnimation(
+        this.animState.startX = this.state.x;
+        this.animState.startY = this.state.y;
+        this.animState.startAngle = this.state.angle;
+        break;
+
+      case "begin_fill":
+        this.fillManager.begin(this.state.x, this.state.y);
+        break;
+
+      case "end_fill":
+        this.fillManager.end();
+        break;
+    }
+  }
+
+  execute(command: Command, progress: number): void {
+    switch (command.type) {
+      case "forward":
+      case "backward":
+        this.executeMove(progress);
+        break;
+
+      case "right":
+      case "left":
+        this.executeRotate(progress);
+        break;
+
+      case "goto":
+        this.executeGoto(progress);
+        break;
+
+      case "angle":
+        this.executeRotate(progress);
+        break;
+
+      case "circle":
+        this.executeCircle(command.args[0], command.args[1], command.args[2], progress);
+        break;
+
+      case "penup":
+        this.state.penDown = false;
+        break;
+
+      case "pendown":
+        this.state.penDown = true;
+        break;
+
+      case "pensize":
+        this.state.penSize = command.args[0];
+        break;
+
+      case "pencolor":
+        this.state.penColor = command.args[0];
+        break;
+
+      case "fillcolor":
+        this.state.fillColor = command.args[0];
+        break;
+
+      case "color":
+        this.state.penColor = command.args[0];
+        this.state.fillColor = command.args[0];
+        break;
+
+      case "clear":
+        this.drawer.clear();
+        break;
+
+      case "dot":
+        this.drawer.drawDot(
+          this.state.x,
+          this.state.y,
+          command.args[0] || this.state.penSize * 2,
+          command.args[1] || this.state.penColor,
+        );
+        break;
+
+      case "stamp":
+        this.drawer.drawStamp(
+          this.state.x,
+          this.state.y,
+          this.state.angle,
+          this.state.penColor,
+        );
+        break;
+
+      case "write":
+        this.drawer.drawText(
+          this.state.x,
+          this.state.y,
           command.args[0],
           command.args[1],
-          command.args[2],
-          progress,
+          this.state.penColor,
         );
         break;
     }
   }
 
-  private executeCircleAnimation(
-    radius: number,
-    extent: number,
-    steps: number,
-    progress: number,
-  ) {
-    const angleStep = (extent * Math.PI) / 180 / steps;
-    const stepLength = 2 * Math.abs(radius) * Math.sin(Math.abs(angleStep) / 2);
-    const turnDirection = radius > 0 ? 1 : -1;
-
-    const currentSteps = Math.floor(steps * progress);
-
-    this.x = this.startX;
-    this.y = this.startY;
-    this.angle = this.startAngle;
-
-    for (let i = 0; i < currentSteps; i++) {
-      const newX = this.x + Math.cos(this.angle) * stepLength;
-      const newY = this.y + Math.sin(this.angle) * stepLength;
-
-      if (this.penDown) {
-        this.drawCtx.beginPath();
-        this.drawCtx.moveTo(this.x, this.y);
-        this.drawCtx.lineTo(newX, newY);
-        this.drawCtx.strokeStyle = this.penColor;
-        this.drawCtx.lineWidth = this.penSize;
-        this.drawCtx.stroke();
-      }
-
-      this.x = newX;
-      this.y = newY;
-      this.angle -= (turnDirection * (extent / steps) * Math.PI) / 180;
-    }
-  }
-
-  private finalizeCommand(command: Command) {
+  finalize(command: Command): void {
     switch (command.type) {
       case "forward":
       case "backward":
       case "goto":
-        this.x = this.targetX;
-        this.y = this.targetY;
-        if (this.isFilling) {
-          this.fillPath.push([this.x, this.y]);
-        }
+        this.state.x = this.animState.targetX;
+        this.state.y = this.animState.targetY;
+        this.fillManager.addPoint(this.state.x, this.state.y);
         break;
 
       case "right":
       case "left":
-      case "setheading":
-        this.angle = this.targetAngle;
+      case "angle":
+        this.state.angle = this.animState.targetAngle;
         break;
 
       case "circle":
-        // Final position is already set
-        if (this.isFilling) {
-          this.fillPath.push([this.x, this.y]);
-        }
+        this.fillManager.addPoint(this.state.x, this.state.y);
         break;
     }
   }
 
-private drawTurtle() {
-    // Clear the cursor canvas before redrawing
-    this.cursorCtx.clearRect(0, 0, this.cursorCtx.canvas.width, this.cursorCtx.canvas.height);
-    
-    this.cursorCtx.save();
-    this.cursorCtx.translate(this.x, this.y);
-    // Pointing direction (facing the angle)
-    this.cursorCtx.rotate(this.angle + Math.PI / 2);
+  private executeMove(progress: number): void {
+    const currentX =
+      this.animState.startX +
+      (this.animState.targetX - this.animState.startX) * progress;
+    const currentY =
+      this.animState.startY +
+      (this.animState.targetY - this.animState.startY) * progress;
 
-    this.cursorCtx.fillStyle = this.penColor;
-    this.cursorCtx.strokeStyle = "rgba(0,0,0,0.5)"; // Subtle outline
-    this.cursorCtx.lineWidth = 1;
+    if (this.state.penDown) {
+      this.drawer.drawLine(
+        this.animState.startX,
+        this.animState.startY,
+        currentX,
+        currentY,
+        this.state.penColor,
+        this.state.penSize,
+      );
+    }
 
-    const s = this.turtleSize; 
+    this.state.x = currentX;
+    this.state.y = currentY;
+  }
 
-    this.cursorCtx.beginPath();
-    // Tip of the arrow (Front)
-    this.cursorCtx.moveTo(0, -s / 2); 
-    
-    // Right back corner
-    this.cursorCtx.lineTo(s / 2, s / 2); 
-    
-    // The "Missing Part" (Center indentation)
-    // This pulls the back of the triangle inward
-    this.cursorCtx.lineTo(0, s / 4); 
-    
-    // Left back corner
-    this.cursorCtx.lineTo(-s / 2, s / 2); 
-    
-    this.cursorCtx.closePath();
-    this.cursorCtx.fill();
-    this.cursorCtx.stroke();
+  private executeRotate(progress: number): void {
+    this.state.angle =
+      this.animState.startAngle +
+      (this.animState.targetAngle - this.animState.startAngle) * progress;
+  }
 
-    this.cursorCtx.restore();
+  private executeGoto(progress: number): void {
+    const gotoX =
+      this.animState.startX +
+      (this.animState.targetX - this.animState.startX) * progress;
+    const gotoY =
+      this.animState.startY +
+      (this.animState.targetY - this.animState.startY) * progress;
+
+    if (this.state.penDown) {
+      this.drawer.drawLine(
+        this.animState.startX,
+        this.animState.startY,
+        gotoX,
+        gotoY,
+        this.state.penColor,
+        this.state.penSize,
+      );
+    }
+
+    this.state.x = gotoX;
+    this.state.y = gotoY;
+  }
+
+  private executeCircle(
+    radius: number,
+    extent: number,
+    steps: number,
+    progress: number,
+  ): void {
+    const angleStep = (extent * Math.PI) / 180 / steps;
+    const stepLength = 2 * Math.abs(radius) * Math.sin(Math.abs(angleStep) / 2);
+    const turnDirection = radius > 0 ? 1 : -1;
+    const currentSteps = Math.floor(steps * progress);
+
+    this.state.x = this.animState.startX;
+    this.state.y = this.animState.startY;
+    this.state.angle = this.animState.startAngle;
+
+    for (let i = 0; i < currentSteps; i++) {
+      const newX = this.state.x + Math.cos(this.state.angle) * stepLength;
+      const newY = this.state.y + Math.sin(this.state.angle) * stepLength;
+
+      if (this.state.penDown) {
+        this.drawer.drawLine(
+          this.state.x,
+          this.state.y,
+          newX,
+          newY,
+          this.state.penColor,
+          this.state.penSize,
+        );
+      }
+
+      this.state.x = newX;
+      this.state.y = newY;
+      this.state.angle -= (turnDirection * (extent / steps) * Math.PI) / 180;
+    }
+  }
 }
 
-  // Public API methods - these now queue commands instead of executing immediately
+// ============================================================================
+// CANVAS DRAWER
+// ============================================================================
 
-  forward(dist: number) {
-    const duration = Math.abs(dist) * 2; // 2ms per unit
-    this.enqueue({ type: "forward", args: [dist], duration });
+class CanvasDrawer {
+  constructor(private ctx: CanvasRenderingContext2D) {}
+
+  drawLine(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    color: string,
+    width: number,
+  ): void {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x1, y1);
+    this.ctx.lineTo(x2, y2);
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = width;
+    this.ctx.stroke();
   }
 
-  backward(dist: number) {
-    this.forward(-dist);
+  drawDot(x: number, y: number, size: number, color: string): void {
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
+    this.ctx.fill();
   }
 
-  right(deg: number) {
-    const duration = Math.abs(deg) * 3; // 3ms per degree
-    this.enqueue({ type: "right", args: [(deg * Math.PI) / 180], duration });
-  }
-
-  left(deg: number) {
-    const duration = Math.abs(deg) * 3;
-    this.enqueue({ type: "left", args: [(-deg * Math.PI) / 180], duration });
-  }
-
-  goto(x: number, y: number) {
-    const distance = Math.sqrt(
-      Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2),
-    );
-    const duration = distance * 2;
-    this.enqueue({ type: "goto", args: [x, y], duration });
-  }
-
-  setx(x: number) {
-    this.goto(x, this.y);
-  }
-
-  sety(y: number) {
-    this.goto(this.x, y);
-  }
-
-  setheading(angle: number) {
-    const angleDiff = Math.abs((angle * Math.PI) / 180 - this.angle);
-    const duration = ((angleDiff * 180) / Math.PI) * 3;
-    this.enqueue({
-      type: "setheading",
-      args: [(angle * Math.PI) / 180],
-      duration,
-    });
-  }
-
-  home() {
-    this.goto(this.drawCtx.canvas.width / 2, this.drawCtx.canvas.height / 2);
-    this.setheading(90);
-  }
-
-  circle(radius: number, extent: number = 360, steps?: number) {
-    if (!steps) {
-      steps = Math.max(24, Math.floor(Math.abs(radius)));
-    }
-    const duration = Math.abs(extent) * 5; // 5ms per degree
-    this.enqueue({ type: "circle", args: [radius, extent, steps], duration });
-  }
-
-  dot(size?: number, color?: string) {
-    this.enqueue({
-      type: "instant",
-      args: [],
-      duration: 0,
-    });
-
-    const dotSize = size || this.penSize * 2;
-    const oldFillStyle = this.drawCtx.fillStyle;
-
-    this.drawCtx.fillStyle = color || this.penColor;
-    this.drawCtx.beginPath();
-    this.drawCtx.arc(this.x, this.y, dotSize / 2, 0, 2 * Math.PI);
-    this.drawCtx.fill();
-
-    this.drawCtx.fillStyle = oldFillStyle;
-  }
-
-  stamp() {
-    this.enqueue({
-      type: "instant",
-      args: [],
-      duration: 0,
-    });
-
-    // Stamp on drawing canvas (permanent)
+  drawStamp(x: number, y: number, angle: number, color: string): void {
     const size = 10;
-    this.drawCtx.save();
-    this.drawCtx.translate(this.x, this.y);
-    this.drawCtx.rotate(this.angle + Math.PI / 2);
+    this.ctx.save();
+    this.ctx.translate(x, y);
+    this.ctx.rotate(angle + Math.PI / 2);
 
-    this.drawCtx.fillStyle = this.penColor;
-    this.drawCtx.strokeStyle = this.penColor;
-    this.drawCtx.lineWidth = 2;
+    this.ctx.fillStyle = color;
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 2;
 
-    this.drawCtx.beginPath();
-    this.drawCtx.moveTo(0, -size);
-    this.drawCtx.lineTo(-size / 2, size / 2);
-    this.drawCtx.lineTo(size / 2, size / 2);
-    this.drawCtx.closePath();
-    this.drawCtx.fill();
-    this.drawCtx.stroke();
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, -size);
+    this.ctx.lineTo(-size / 2, size / 2);
+    this.ctx.lineTo(size / 2, size / 2);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
 
-    this.drawCtx.restore();
+    this.ctx.restore();
   }
 
-  // Pen control
-  penup() {
-    this.penDown = false;
+  drawText(
+    x: number,
+    y: number,
+    text: string,
+    font: string = "16px Arial",
+    color: string,
+  ): void {
+    this.ctx.save();
+    this.ctx.font = font;
+    this.ctx.fillStyle = color;
+    this.ctx.fillText(text, x, y);
+    this.ctx.restore();
   }
 
-  pendown() {
-    this.penDown = true;
+  clear(): void {
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
+}
 
-  pensize(size: number) {
-    this.penSize = size;
-  }
+// ============================================================================
+// FILL MANAGER
+// ============================================================================
 
-  pencolor(color: string) {
-    this.penColor = color;
-  }
+class FillManager {
+  private fillPath: [number, number][] = [];
+  private isFilling = false;
 
-  fillcolor(color: string) {
-    this.fillColor = color;
-  }
+  constructor(
+    private ctx: CanvasRenderingContext2D,
+    private state: TurtleState,
+  ) {}
 
-  color(color: string) {
-    this.pencolor(color);
-    this.fillcolor(color);
-  }
-
-  begin_fill() {
+  begin(x: number, y: number): void {
     this.isFilling = true;
-    this.fillPath = [[this.x, this.y]];
+    this.fillPath = [[x, y]];
   }
 
-  end_fill() {
+  addPoint(x: number, y: number): void {
+    if (this.isFilling) {
+      this.fillPath.push([x, y]);
+    }
+  }
+
+  end(): void {
     if (this.fillPath.length > 0) {
-      this.drawCtx.beginPath();
-      this.drawCtx.moveTo(this.fillPath[0][0], this.fillPath[0][1]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.fillPath[0][0], this.fillPath[0][1]);
       for (let i = 1; i < this.fillPath.length; i++) {
-        this.drawCtx.lineTo(this.fillPath[i][0], this.fillPath[i][1]);
+        this.ctx.lineTo(this.fillPath[i][0], this.fillPath[i][1]);
       }
-      this.drawCtx.closePath();
-      this.drawCtx.fillStyle = this.fillColor;
-      this.drawCtx.fill();
+      this.ctx.closePath();
+      this.ctx.fillStyle = this.state.fillColor;
+      this.ctx.fill();
     }
     this.isFilling = false;
     this.fillPath = [];
   }
 
-  clear() {
-    this.drawCtx.clearRect(
-      0,
-      0,
-      this.drawCtx.canvas.width,
-      this.drawCtx.canvas.height,
-    );
-    this.cursorCtx.clearRect(
-      0,
-      0,
-      this.cursorCtx.canvas.width,
-      this.cursorCtx.canvas.height,
-    );
+  isActive(): boolean {
+    return this.isFilling;
+  }
+}
+
+// ============================================================================
+// TURTLE RENDERER
+// ============================================================================
+
+class TurtleRenderer {
+  private showTurtle = true;
+  private turtleSize = 15;
+
+  constructor(
+    private ctx: CanvasRenderingContext2D,
+    private state: TurtleState,
+  ) {}
+
+  drawTurtle(): void {
+    if (!this.showTurtle) return;
+
+    this.ctx.save();
+    this.ctx.translate(this.state.x, this.state.y);
+    this.ctx.rotate(this.state.angle + Math.PI / 2);
+
+    this.ctx.fillStyle = this.state.penColor;
+    this.ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    this.ctx.lineWidth = 1;
+
+    const s = this.turtleSize;
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, -s / 2);
+    this.ctx.lineTo(s / 2, s / 2);
+    this.ctx.lineTo(0, s / 4);
+    this.ctx.lineTo(-s / 2, s / 2);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    this.ctx.restore();
   }
 
-  write(text: string, font: string = "16px Arial") {
-    this.drawCtx.save();
-    this.drawCtx.font = font;
-    this.drawCtx.fillStyle = this.penColor;
-    this.drawCtx.fillText(text, this.x, this.y);
-    this.drawCtx.restore();
+  clearCursor(): void {
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
-  // Utility methods
-  speed(s: number) {
-    // 0: no animation, 1-10: slowest to fastest
-    if (s === 0) {
-      this.animationSpeed = Infinity;
-    } else {
-      this.animationSpeed = s / 5;
+  setVisibility(visible: boolean): void {
+    this.showTurtle = visible;
+    if (!visible) {
+      this.clearCursor();
     }
   }
 
-  hideturtle() {
-    this.showTurtle = false;
-    this.cursorCtx.clearRect(
-      0,
-      0,
-      this.cursorCtx.canvas.width,
-      this.cursorCtx.canvas.height,
+  isVisible(): boolean {
+    return this.showTurtle;
+  }
+}
+
+// ============================================================================
+// MAIN TURTLE CANVAS CLASS
+// ============================================================================
+
+export class TurtleCanvas {
+  private state: TurtleState;
+  private drawDrawer: CanvasDrawer;
+  private cursorDrawer: CanvasDrawer;
+  private fillManager: FillManager;
+  private renderer: TurtleRenderer;
+  private executor: CommandExecutor;
+  private animator: AnimationHandler;
+
+  constructor(drawCanvas: HTMLCanvasElement, cursorCanvas: HTMLCanvasElement) {
+    const drawCtx = drawCanvas.getContext("2d")!;
+    const cursorCtx = cursorCanvas.getContext("2d")!;
+
+    this.state = {
+      x: drawCanvas.width / 2,
+      y: drawCanvas.height / 2,
+      angle: -Math.PI / 2,
+      penDown: true,
+      penColor: "white",
+      penSize: 2,
+      fillColor: "white",
+    };
+
+    this.drawDrawer = new CanvasDrawer(drawCtx);
+    this.cursorDrawer = new CanvasDrawer(cursorCtx);
+    this.fillManager = new FillManager(drawCtx, this.state);
+    this.renderer = new TurtleRenderer(cursorCtx, this.state);
+    this.executor = new CommandExecutor(
+      this.state,
+      this.drawDrawer,
+      this.fillManager,
     );
+    this.animator = new AnimationHandler(this.executor, this.renderer);
+
+    this.renderer.drawTurtle();
   }
 
-  showturtle() {
-    this.showTurtle = true;
+  // ============================================================================
+  // MOVEMENT COMMANDS
+  // ============================================================================
+
+  forward(dist: number): void {
+    this.animator.enqueue({
+      type: "forward",
+      args: [dist],
+      duration: Math.abs(dist) * 2,
+    });
+  }
+
+  backward(dist: number): void {
+    this.forward(-dist);
+  }
+
+  right(deg: number): void {
+    this.animator.enqueue({
+      type: "right",
+      args: [(deg * Math.PI) / 180],
+      duration: Math.abs(deg) * 3,
+    });
+  }
+
+  left(deg: number): void {
+    this.animator.enqueue({
+      type: "left",
+      args: [(-deg * Math.PI) / 180],
+      duration: Math.abs(deg) * 3,
+    });
+  }
+
+  goto(x: number, y: number): void {
+    const distance = Math.sqrt(
+      Math.pow(x - this.state.x, 2) + Math.pow(y - this.state.y, 2),
+    );
+    this.animator.enqueue({
+      type: "goto",
+      args: [x, y],
+      duration: distance * 2,
+    });
+  }
+
+  setx(x: number): void {
+    this.goto(x, this.state.y);
+  }
+
+  sety(y: number): void {
+    this.goto(this.state.x, y);
+  }
+
+  angle(angle: number): void {
+    const angleDiff = Math.abs((angle * Math.PI) / 180 - this.state.angle);
+    this.animator.enqueue({
+      type: "angle",
+      args: [(angle * Math.PI) / 180],
+      duration: ((angleDiff * 180) / Math.PI) * 3,
+    });
+  }
+
+  home(): void {
+    const canvas = (this.drawDrawer as any).ctx.canvas;
+    this.goto(canvas.width / 2, canvas.height / 2);
+    this.angle(90);
+  }
+
+  circle(radius: number, extent: number = 360, steps?: number): void {
+    if (!steps) {
+      steps = Math.max(24, Math.floor(Math.abs(radius)));
+    }
+    this.animator.enqueue({
+      type: "circle",
+      args: [radius, extent, steps],
+      duration: Math.abs(extent) * 5,
+    });
+  }
+
+  // ============================================================================
+  // PEN CONTROL
+  // ============================================================================
+
+  penup(): void {
+    this.animator.enqueue({ type: "penup", args: [], duration: 0 });
+  }
+
+  pendown(): void {
+    this.animator.enqueue({ type: "pendown", args: [], duration: 0 });
+  }
+
+  pensize(size: number): void {
+    this.animator.enqueue({ type: "pensize", args: [size], duration: 0 });
+  }
+
+  pencolor(color: string): void {
+    this.animator.enqueue({ type: "pencolor", args: [color], duration: 0 });
+  }
+
+  fillcolor(color: string): void {
+    this.animator.enqueue({ type: "fillcolor", args: [color], duration: 0 });
+  }
+
+  color(color: string): void {
+    this.animator.enqueue({ type: "color", args: [color], duration: 0 });
+  }
+
+  // ============================================================================
+  // FILL COMMANDS
+  // ============================================================================
+
+  begin_fill(): void {
+    this.animator.enqueue({ type: "begin_fill", args: [], duration: 0 });
+  }
+
+  end_fill(): void {
+    this.animator.enqueue({ type: "end_fill", args: [], duration: 0 });
+  }
+
+  // ============================================================================
+  // DRAWING COMMANDS
+  // ============================================================================
+
+  dot(size?: number, color?: string): void {
+    this.animator.enqueue({
+      type: "dot",
+      args: [size, color],
+      duration: 0,
+    });
+  }
+
+  stamp(): void {
+    this.animator.enqueue({ type: "stamp", args: [], duration: 0 });
+  }
+
+  write(text: string, font: string = "16px Arial"): void {
+    this.animator.enqueue({
+      type: "write",
+      args: [text, font],
+      duration: 0,
+    });
+  }
+
+  // ============================================================================
+  // CANVAS CONTROL
+  // ============================================================================
+
+  clear(): void {
+    // Now properly queued!
+    this.animator.enqueue({ type: "clear", args: [], duration: 0 });
+  }
+
+  reset(): void {
+    const canvas = (this.drawDrawer as any).ctx.canvas;
+    this.state.x = canvas.width / 2;
+    this.state.y = canvas.height / 2;
+    this.state.angle = -Math.PI / 2;
+    this.state.penDown = true;
+    this.state.penColor = "white";
+    this.state.penSize = 2;
+    this.state.fillColor = "white";
+    this.animator.clear();
+    this.drawDrawer.clear();
+    this.cursorDrawer.clear();
+    this.renderer.drawTurtle();
+  }
+
+  // ============================================================================
+  // UTILITY METHODS
+  // ============================================================================
+
+  speed(s: number): void {
+    this.animator.setSpeed(s);
+  }
+
+  hideturtle(): void {
+    this.renderer.setVisibility(false);
+  }
+
+  showturtle(): void {
+    this.renderer.setVisibility(true);
   }
 
   position(): [number, number] {
-    return [this.x, this.y];
+    return [this.state.x, this.state.y];
   }
 
   heading(): number {
-    return ((this.angle * 180) / Math.PI) % 360;
+    return ((this.state.angle * 180) / Math.PI) % 360;
   }
 
   distance(x: number, y: number): number {
-    return Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2));
+    return Math.sqrt(
+      Math.pow(x - this.state.x, 2) + Math.pow(y - this.state.y, 2),
+    );
   }
 
   towards(x: number, y: number): number {
-    const angle = Math.atan2(y - this.y, x - this.x);
+    const angle = Math.atan2(y - this.state.y, x - this.state.x);
     return ((angle * 180) / Math.PI) % 360;
   }
 
   isdown(): boolean {
-    return this.penDown;
+    return this.state.penDown;
   }
 
   width(): number {
-    return this.drawCtx.canvas.width;
+    return (this.drawDrawer as any).ctx.canvas.width;
   }
 
   height(): number {
-    return this.drawCtx.canvas.height;
+    return (this.drawDrawer as any).ctx.canvas.height;
   }
 }

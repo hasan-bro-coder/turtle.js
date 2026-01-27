@@ -46,7 +46,7 @@ environment
     return MK_NULL();
   })
   .addBuilitinFunc("angle", 1, (args: RuntimeVal[]) => {
-    turtle.setheading((args[0] as any).value);
+    turtle.angle((args[0] as any).value);
     return MK_NULL();
   })
   .addBuilitinFunc("home", 0, () => {
@@ -206,6 +206,6 @@ environment
   })
   
   
-  environment.assignVar("PI",MK_NUMBER(Math.PI));
+  // environment.assignVar("PI",MK_NUMBER(Math.PI));
 
 export const env = environment;

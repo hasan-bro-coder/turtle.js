@@ -206,6 +206,6 @@ environment
   })
   
   
-  // environment.assignVar("PI",MK_NUMBER(Math.PI));
+  environment.declareVar("PI",MK_NUMBER(Math.PI));
 
 export const env = environment;

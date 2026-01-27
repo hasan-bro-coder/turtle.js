@@ -170,3 +170,28 @@ canvas {
 }
 /* CodeMirror height fix */
 .cm-editor { height: 100%; }
+
+::-webkit-scrollbar {
+  width: 8px;              /* Controls the width of the vertical scrollbar */
+  height: 8px;             /* Controls the height of the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;     /* The "path" the scrollbar travels in */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #000000;     /* The actual draggable handle */
+  border-radius: 10px;     /* Makes it look sleek and rounded */
+  border: 1px solid #333;  /* Optional: adds a slight separation */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;     /* Subtle change when hovered */
+}
+
+/* 2. For Firefox (Modern Standard) */
+* {
+  scrollbar-width: thin;          /* Options: "auto", "thin", or "none" */
+  scrollbar-color: #000000 #1a1a1a; /* thumb color | track color */
+}

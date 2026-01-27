@@ -6,9 +6,10 @@ import { defaultKeymap } from "@codemirror/commands";
 // import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { run } from "./lang/run";
 import Console from "./console";
 import { turtle } from "./module";
+import { codeCompletions } from "./lang/editor/autocomplete";
+import { autocompletion } from "@codemirror/autocomplete";
 
 const STORAGE_KEY = "turtle_js_code_autosave";
 const getSavedCode = (): string => {
@@ -27,15 +28,23 @@ const autoSaveExtension = EditorView.updateListener.of((update) => {
 let startState = EditorState.create({
   doc:
     getSavedCode() ||
-    `print "Hello, World"
-forward 100
-right 90
-forward 100`,
+    `print "hello"
+num_steps = 60
+step_size = 10
+turn_angle = 120
+
+
+for i num_steps do
+    forward step_size
+    left turn_angle
+    step_size = step_size + 10
+end`,
   extensions: [
     oneDark,
     keymap.of(defaultKeymap),
     basicSetup,
     python(),
+    autocompletion({ override: [codeCompletions] }),
     autoSaveExtension,
   ],
 });
@@ -88,22 +97,27 @@ consoleHeader.addEventListener("click", () => {
   }
 });
 
+let run: (code: string) => void;
 
+import("./lang/run").then((module) => {
+  run = module.run;
+});
+
+function runCode() {
+  const code = editor.state.doc.toString();
+  turtle.reset();
+  run(code + "\n");
+  console.log(code);
+}
 
 document
   .querySelector<HTMLButtonElement>("#runBtn")
   ?.addEventListener("click", () => {
-    const code = editor.state.doc.toString();
-    turtle.reset();
-    run(code + "\n");
-    console.log(code);
+    runCode();
   });
 
 window.addEventListener("keydown", (event) => {
   if (event.altKey && event.key === "r") {
-    const code = editor.state.doc.toString();
-    turtle.reset();
-    run(code + "\n");
-    console.log(code);
+    runCode();
   }
 });

@@ -14,6 +14,7 @@ type CommandType =
   | "right"
   | "left"
   | "goto"
+  | "move"
   | "angle"
   | "circle" 
   | "penup"
@@ -216,6 +217,10 @@ class CommandExecutor {
         this.executeGoto(progress);
         break;
 
+      case "move":
+        this.executeGoto(progress);
+        break;
+
       case "angle":
         this.executeRotate(progress);
         break;
@@ -292,7 +297,11 @@ class CommandExecutor {
         this.state.y = this.animState.targetY;
         this.fillManager.addPoint(this.state.x, this.state.y);
         break;
-
+      // case "move":
+      //   this.state.x = this.animState.targetX;
+      //   this.state.y = this.animState.targetY;
+      //   this.fillManager.addPoint(this.state.x, this.state.y);
+        break;
       case "right":
       case "left":
       case "angle":
@@ -305,28 +314,6 @@ class CommandExecutor {
     }
   }
 
-  private executeMove(progress: number): void {
-    const currentX =
-      this.animState.startX +
-      (this.animState.targetX - this.animState.startX) * progress;
-    const currentY =
-      this.animState.startY +
-      (this.animState.targetY - this.animState.startY) * progress;
-
-    if (this.state.penDown) {
-      this.drawer.drawLine(
-        this.animState.startX,
-        this.animState.startY,
-        currentX,
-        currentY,
-        this.state.penColor,
-        this.state.penSize,
-      );
-    }
-
-    this.state.x = currentX;
-    this.state.y = currentY;
-  }
 
   private executeRotate(progress: number): void {
     this.state.angle =
@@ -335,6 +322,29 @@ class CommandExecutor {
   }
 
   private executeGoto(progress: number): void {
+    const gotoX =
+      this.animState.startX +
+      (this.animState.targetX - this.animState.startX) * progress;
+    const gotoY =
+      this.animState.startY +
+      (this.animState.targetY - this.animState.startY) * progress;
+
+    if (this.state.penDown) {
+      this.drawer.drawLine(
+        this.animState.startX,
+        this.animState.startY,
+        gotoX,
+        gotoY,
+        this.state.penColor,
+        this.state.penSize,
+      );
+    }
+
+    this.state.x = gotoX;
+    this.state.y = gotoY;
+  }
+
+    private executeMove(progress: number): void {
     const gotoX =
       this.animState.startX +
       (this.animState.targetX - this.animState.startX) * progress;
@@ -642,6 +652,17 @@ export class TurtleCanvas {
     this.animator.enqueue({
       type: "goto",
       args: [x, y],
+      duration: distance * 2,
+    });
+  }
+
+  move(x: number, y: number): void {
+    const distance = Math.sqrt(
+      Math.pow(x, 2) + Math.pow(y, 2),
+    );
+    this.animator.enqueue({
+      type: "goto",
+      args: [this.state.x + x, this.state.y + y],
       duration: distance * 2,
     });
   }

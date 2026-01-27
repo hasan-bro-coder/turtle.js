@@ -37,6 +37,10 @@ environment
     turtle.goto((args[0] as any).value, (args[1] as any).value);
     return MK_NULL();
   })
+  .addBuilitinFunc("move", 2, (args: RuntimeVal[]) => {
+    turtle.move((args[0] as any).value, (args[1] as any).value);
+    return MK_NULL();
+  })
   .addBuilitinFunc("setx", 1, (args: RuntimeVal[]) => {
     turtle.setx((args[0] as any).value);
     return MK_NULL();
@@ -130,11 +134,11 @@ environment
   })
 
   // Turtle visibility
-  .addBuilitinFunc("hideturtle", 0, () => {
+  .addBuilitinFunc("hidepen", 0, () => {
     turtle.hideturtle();
     return MK_NULL();
   })
-  .addBuilitinFunc("showturtle", 0, () => {
+  .addBuilitinFunc("showpen", 0, () => {
     turtle.showturtle();
     return MK_NULL();
   })
@@ -196,6 +200,44 @@ environment
       value: Math.min((args[0] as any).value, (args[1] as any).value),
     };
   })
+  .addBuilitinFunc("random", 0, () => {
+    // Returns a float between 0 and 1
+    return { type: "number", value: Math.random() };
+  })
+  .addBuilitinFunc("randint", 2, (args: RuntimeVal[]) => {
+    // Returns an integer between min and max (inclusive)
+    const min = (args[0] as any).value;
+    const max = (args[1] as any).value;
+    return {
+      type: "number",
+      value: Math.floor(Math.random() * (max - min + 1)) + min,
+    };
+  })
+
+  .addBuilitinFunc("now", 0, () => {
+    // Current timestamp in milliseconds
+    return { type: "number", value: Date.now() };
+  })
+  .addBuilitinFunc("time", 0, () => {
+    // Current time in seconds (common in Python/Unix)
+    return { type: "number", value: Date.now() / 1000 };
+  })
+
+  // --- Utility Functions ---
+  .addBuilitinFunc("wait", 1, (args: RuntimeVal[]) => {
+    // Note: This is tricky in a synchronous interpreter.
+    // It works best if your evaluator is async.
+    const ms = (args[0] as any).value;
+    const start = Date.now();
+    while (Date.now() - start < ms) {
+      /* Sync block - use with caution */
+    }
+    return MK_NULL();
+  })
+  .addBuilitinFunc("type", 1, (args: RuntimeVal[]) => {
+    // Returns the type name as a string
+    return { type: "string", value: args[0].type };
+  })
 
   .addBuilitinFunc("print", 1, (args: RuntimeVal[]) => {
     //@ts-ignore
@@ -203,9 +245,8 @@ environment
     console.log(`${args[0].value} (${args[0].type})`);
 
     return MK_NULL();
-  })
-  
-  
-  environment.declareVar("PI",MK_NUMBER(Math.PI));
+  });
+
+environment.declareVar("PI", MK_NUMBER(Math.PI));
 
 export const env = environment;

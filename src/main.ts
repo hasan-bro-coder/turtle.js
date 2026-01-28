@@ -3,15 +3,12 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { defaultKeymap } from "@codemirror/commands";
-// import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 import Console from "./console";
 import { codeCompletions } from "./lang/editor/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 import { turtle } from "./module";
-
-// import { TurtleCanvas } from "./canvas";
 
 const STORAGE_KEY = "turtle_js_code_autosave";
 const getSavedCode = (): string => {
@@ -30,20 +27,17 @@ const autoSaveExtension = EditorView.updateListener.of((update) => {
 let startState = EditorState.create({
   doc:
     getSavedCode() ||
-    `loop true do
-    hidepen
-    base = [randint 10,150]
-    adj = [randint 10,150]
-    hype = [sqrt ([pow base,2] + [pow adj,2])]
-    right 90
-    forward base
-    left 90
-    forward adj
-    left 180-[deg [atan base / adj]]
-    forward hype
-    wait 1000
-    reset
-end `,
+    `num_steps = 60
+step_size = 5
+turn_angle = 120
+
+
+for i num_steps do
+    forward step_size
+    left turn_angle 
+    step_size = step_size + 10
+    wait 100
+end`,
   extensions: [
     oneDark,
     keymap.of(defaultKeymap),
@@ -103,7 +97,84 @@ fileInput.addEventListener("change", (event) => {
   reader.readAsText(file);
 });
 
+
+
+export const isMobile = () => {
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  
+  // Checks for common mobile patterns
+  return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase()) || (isTouch && window.innerWidth <= 768);
+};
+
+const symbols = ["#", "[", "]", "," ,"(", ")", "=", "<", ">"];
+
+const createToolbar = (view: EditorView) => {
+  const bar = document.getElementById("mobile-toolbar")!;
+  symbols.forEach(sym => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "sym-btn";
+    btn.textContent = sym;
+
+    // Use mousedown/touchstart to intercept focus
+    btn.addEventListener("mousedown", (e) => {
+      e.preventDefault(); // This is the secret sauce to keep the keyboard up
+      
+      const { main } = view.state.selection;
+      view.dispatch({
+        changes: { from: main.from, to: main.to, insert: sym },
+        selection: { anchor: main.from + sym.length },
+        scrollIntoView: true,
+      });
+      
+      view.focus();
+    });
+
+    bar.appendChild(btn);
+  });
+
+  return bar;
+};
+
+if (isMobile()){
+    createToolbar(editor);
+}
+
+
+
 Console.initialize("console-output");
+
+
+
+const consoleBtn = document.getElementById(
+  "consoleToggleBtn",
+) as HTMLButtonElement;
+const consoleContainer = document.getElementById(
+  "console-container",
+) as HTMLDivElement;
+const consoleHeader = document.querySelector(
+  ".console-header",
+) as HTMLDivElement;
+
+
+consoleBtn.addEventListener("click", () => {
+  consoleContainer.classList.toggle("mobile-show");
+  if (consoleContainer.classList.contains("mobile-show")) {
+    consoleBtn.textContent = "✖";
+  } else {
+    consoleBtn.textContent = "⌨";
+  }
+});
+consoleHeader.addEventListener("click", () => {
+  if (window.innerWidth <= 768) {
+    consoleContainer.classList.remove("mobile-show");
+    consoleBtn.textContent = "⌨";
+  }
+});
+
+
+
 const canvas = document.getElementById("turtleCanvas") as HTMLCanvasElement;
 const cursorCanvas = document.getElementById(
   "turtleCursorCanvas",
@@ -122,30 +193,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-const consoleBtn = document.getElementById(
-  "consoleToggleBtn",
-) as HTMLButtonElement;
-const consoleContainer = document.getElementById(
-  "console-container",
-) as HTMLDivElement;
-const consoleHeader = document.querySelector(
-  ".console-header",
-) as HTMLDivElement;
 
-consoleBtn.addEventListener("click", () => {
-  consoleContainer.classList.toggle("mobile-show");
-  if (consoleContainer.classList.contains("mobile-show")) {
-    consoleBtn.textContent = "✖ Close";
-  } else {
-    consoleBtn.textContent = "⌨ Console";
-  }
-});
-consoleHeader.addEventListener("click", () => {
-  if (window.innerWidth <= 768) {
-    consoleContainer.classList.remove("mobile-show");
-    consoleBtn.textContent = "⌨ Console";
-  }
-});
 
 let run: (code: string) => void;
 

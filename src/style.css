@@ -40,6 +40,11 @@ button {
 
 button:active { transform: scale(0.95); }
 
+button svg {
+  color: white;
+  fill: white;
+  width: 15px;
+}
 .app-container {
   display: flex;
   height: calc(100vh - 50px);

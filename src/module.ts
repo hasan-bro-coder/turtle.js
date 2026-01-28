@@ -9,7 +9,7 @@ const drawCanvasEl = document.getElementById(
 const cursorCanvasEl = document.getElementById(
   "turtleCursorCanvas",
 ) as HTMLCanvasElement;
-export const turtle = TurtleCanvas.getInstance(drawCanvasEl, cursorCanvasEl);
+export const turtle = new TurtleCanvas(drawCanvasEl, cursorCanvasEl);
 
 const environment = new Environment();
 
@@ -31,21 +31,20 @@ environment
     return MK_NULL();
   })
 
-  // Position control
   .addBuilitinFunc("goto", 2, async (args: Promise<RuntimeVal>[]) => {
-    await turtle.goto((await args[0] as any).value, (await args[1] as any).value);
+    turtle.goto((await args[0] as any).value, (await args[1] as any).value);
     return MK_NULL();
   })
-  .addBuilitinFunc("move", 2, async (args: Promise<RuntimeVal>[]) => {
-    await turtle.move((await args[0] as any).value, (await args[1] as any).value);
-    return MK_NULL();
-  })
+  // .addBuilitinFunc("move", 2, async (args: Promise<RuntimeVal>[]) => {
+  //   turtle.move((await args[0] as any).value, (await args[1] as any).value);
+  //   return MK_NULL();
+  // })
   .addBuilitinFunc("setx", 1, async (args: Promise<RuntimeVal>[]) => {
-    await turtle.setx((await args[0] as any).value);
+    turtle.setx((await args[0] as any).value);
     return MK_NULL();
   })
   .addBuilitinFunc("sety", 1, async (args: Promise<RuntimeVal>[]) => {
-    await turtle.sety((await args[0] as any).value);
+    turtle.sety((await args[0] as any).value);
     return MK_NULL();
   })
   .addBuilitinFunc("angle", 1, async (args: Promise<RuntimeVal>[]) => {
@@ -68,11 +67,6 @@ environment
     turtle.dot();
     return MK_NULL();
   })
-  .addBuilitinFunc("stamp", 0, async () => {
-    turtle.stamp();
-    return MK_NULL();
-  })
-
   .addBuilitinFunc("pup", 0, async () => {
     turtle.penup();
     return MK_NULL();
@@ -85,18 +79,14 @@ environment
     turtle.pensize((await args[0] as any).value);
     return MK_NULL();
   })
-  .addBuilitinFunc("pcolor", 1, async (args: Promise<RuntimeVal>[]) => {
+  .addBuilitinFunc("color", 1, async (args: Promise<RuntimeVal>[]) => {
     turtle.pencolor((await args[0] as any).value);
     return MK_NULL();
   })
-  .addBuilitinFunc("fillcolor", 1, async (args: Promise<RuntimeVal>[]) => {
-    turtle.fillcolor((await args[0] as any).value);
-    return MK_NULL();
-  })
-  .addBuilitinFunc("color", 1, async (args: Promise<RuntimeVal>[]) => {
-    turtle.color((args[0] as any).value);
-    return MK_NULL();
-  })
+  // .addBuilitinFunc("fillcolor", 1, async (args: Promise<RuntimeVal>[]) => {
+  //   turtle.fillcolor((await args[0] as any).value);
+  //   return MK_NULL();
+  // })
   .addBuilitinFunc("bfill", 0, async() => {
     turtle.begin_fill();
     return MK_NULL();
@@ -106,7 +96,6 @@ environment
     return MK_NULL();
   })
 
-  // Canvas control
   .addBuilitinFunc("clear", 0, async() => {
     turtle.clear();
     return MK_NULL();
@@ -120,11 +109,11 @@ environment
     return MK_NULL();
   })
   .addBuilitinFunc("speed", 1, async (args: Promise<RuntimeVal>[]) => {
-    turtle.speed((await args[0] as any).value);
+    turtle.setspeed((await args[0] as any).value);
     return MK_NULL();
   })
 
-  // Turtle visibility
+  // // Turtle visibility
   .addBuilitinFunc("hidepen", 0, async() => {
     turtle.hideturtle();
     return MK_NULL();
@@ -224,13 +213,22 @@ environment
     return { type: "string", value: (await args[0]).type };
   })
 
-  .addBuilitinFunc("print", 1, async (args: Promise<RuntimeVal>[]) => {
+.addBuilitinFunc("print", 5, async (args: Promise<RuntimeVal>[]) => {
+    // 1. Resolve all promises in the args array
+    const resolvedArgs = await Promise.all(args);
+    
+    // 2. Map the values to strings and join them with a space
+    const output = resolvedArgs
+        .map(arg => String((arg as any).value))
+        .join(" ");
+
+    // 3. Output to your custom Console and the browser console
     //@ts-ignore
-    Console.print(`${(await args[0]).value} (${(await args[0]).type})`);
-    console.log(`${(await args[0]).value} (${(await args[0]).type})`);
+    Console.print(output);
+    console.log(output);
 
     return MK_NULL();
-  });
+});
 
 environment.declareVar("PI", MK_NUMBER(Math.PI));
 

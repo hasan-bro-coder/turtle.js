@@ -9,7 +9,9 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import Console from "./console";
 import { codeCompletions } from "./lang/editor/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
-import { TurtleCanvas } from "./canvas";
+import { turtle } from "./module";
+
+// import { TurtleCanvas } from "./canvas";
 
 const STORAGE_KEY = "turtle_js_code_autosave";
 const getSavedCode = (): string => {
@@ -158,8 +160,8 @@ import("./lang/run").then((module) => {
 
 async function runCode() {
   const code = editor.state.doc.toString();
-  await TurtleCanvas.getInstance().reset();
-
+  // await TurtleCanvas.reset();
+  await turtle.reset();
   run(code + "\n");
   console.log(code);
 }

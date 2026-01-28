@@ -1,653 +1,312 @@
-// ============================================================================
-// ASYNC TURTLE CANVAS - SIMPLIFIED VERSION
-// No queue system needed - language handles sequencing
-// ============================================================================
-
 interface TurtleState {
   x: number;
   y: number;
   angle: number;
   penDown: boolean;
-  penColor: string;
-  penSize: number;
-  fillColor: string;
+  color: string;
+  size: number;
+  speed: number;
+  isVisible: boolean;
 }
 
-// ============================================================================
-// CANVAS DRAWER - Low-level drawing operations
-// ============================================================================
-
-class CanvasDrawer {
-  constructor(private ctx: CanvasRenderingContext2D) {}
-
-  drawLine(
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
-    color: string,
-    width: number,
-  ): void {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x1, y1);
-    this.ctx.lineTo(x2, y2);
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = width;
-    this.ctx.stroke();
-  }
-
-  drawDot(x: number, y: number, size: number, color: string): void {
-    this.ctx.fillStyle = color;
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
-    this.ctx.fill();
-  }
-
-  drawStamp(x: number, y: number, angle: number, color: string): void {
-    const size = 10;
-    this.ctx.save();
-    this.ctx.translate(x, y);
-    this.ctx.rotate(angle + Math.PI / 2);
-
-    this.ctx.fillStyle = color;
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = 2;
-
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, -size);
-    this.ctx.lineTo(-size / 2, size / 2);
-    this.ctx.lineTo(size / 2, size / 2);
-    this.ctx.closePath();
-    this.ctx.fill();
-    this.ctx.stroke();
-
-    this.ctx.restore();
-  }
-
-  drawText(
-    x: number,
-    y: number,
-    text: string,
-    font: string,
-    color: string,
-  ): void {
-    this.ctx.save();
-    this.ctx.font = font;
-    this.ctx.fillStyle = color;
-    this.ctx.fillText(text, x, y);
-    this.ctx.restore();
-  }
-
-  clear(): void {
-    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-  }
-
-  get canvas(): HTMLCanvasElement {
-    return this.ctx.canvas;
-  }
-}
-
-// ============================================================================
-// FILL MANAGER - Handles shape filling
-// ============================================================================
-
-class FillManager {
-  private fillPath: [number, number][] = [];
+export class TurtleCanvas {
+  private state: TurtleState;
+  private drawCtx: CanvasRenderingContext2D;
+  private cursorCtx: CanvasRenderingContext2D;
+  private currentExecutionId = 0;
+  private fillPath: { x: number; y: number }[] = [];
   private isFilling = false;
 
-  constructor(
-    private ctx: CanvasRenderingContext2D,
-    private state: TurtleState,
-  ) {}
-
-  begin(x: number, y: number): void {
-    this.isFilling = true;
-    this.fillPath = [[x, y]];
+  constructor(drawCanvas: HTMLCanvasElement, cursorCanvas: HTMLCanvasElement) {
+    this.drawCtx = drawCanvas.getContext("2d")!;
+    this.cursorCtx = cursorCanvas.getContext("2d")!;
+    this.state = this._getDefaultState();
+    this.reset();
   }
 
-  addPoint(x: number, y: number): void {
-    if (this.isFilling) {
-      this.fillPath.push([x, y]);
-    }
-  }
+  private async _move(distance: number): Promise<void> {
+    const startId = this.currentExecutionId;
+    const startX = this.state.x;
+    const startY = this.state.y;
+    const dirX = Math.cos(this.state.angle);
+    const dirY = Math.sin(this.state.angle);
 
-  end(): void {
-    if (this.fillPath.length > 0) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(this.fillPath[0][0], this.fillPath[0][1]);
-      for (let i = 1; i < this.fillPath.length; i++) {
-        this.ctx.lineTo(this.fillPath[i][0], this.fillPath[i][1]);
+    const endX = startX + dirX * distance;
+    const endY = startY + dirY * distance;
+
+    const isInstant = this.state.speed === -1;
+   const totalSteps = isInstant
+  ? 1
+  : Math.max(Math.ceil(Math.abs(distance / this.state.speed)), 2);
+
+    for (let i = 1; i <= totalSteps; i++) {
+      if (this.currentExecutionId !== startId) return;
+
+      const progress = i / totalSteps;
+      const prevX = this.state.x;
+      const prevY = this.state.y;
+      // Inside the for loop of _move
+      const nextX = startX + (endX - startX) * progress;
+      const nextY = startY + (endY - startY) * progress;
+
+      if (this.state.penDown) {
+        this.drawCtx.beginPath();
+        this.drawCtx.moveTo(prevX, prevY); // Round for drawing
+        this.drawCtx.lineTo(nextX, nextY); // Round for drawing
+        this.drawCtx.strokeStyle = this.state.color;
+        this.drawCtx.lineWidth = this.state.size;
+        this.drawCtx.stroke();
       }
-      this.ctx.closePath();
-      this.ctx.fillStyle = this.state.fillColor;
-      this.ctx.fill();
+
+      this.state.x = nextX;
+      this.state.y = nextY;
+      // const nextX = startX + (endX - startX) * progress;
+      // const nextY = startY + (endY - startY) * progress;
+
+      // if (this.state.penDown) {
+      //   this.drawCtx.beginPath();
+      //   this.drawCtx.moveTo(prevX, prevY);
+      //   this.drawCtx.lineTo(nextX, nextY);
+      //   this.drawCtx.strokeStyle = this.state.color;
+      //   this.drawCtx.lineWidth = this.state.size;
+      //   this.drawCtx.stroke();
+      // }
+
+      // this.state.x = nextX;
+      // this.state.y = nextY;
+
+      if (this.isFilling) this.fillPath.push({ x: nextX, y: nextY });
+
+      this._renderCursor();
+      if (!isInstant) await this._tick();
     }
+
+    // this.state.x = endX;
+    // this.state.y = endY;
+  }
+
+  private async _rotate(degrees: number): Promise<void> {
+    const startId = this.currentExecutionId;
+    const startAngle = this.state.angle;
+    const radians = (degrees * Math.PI) / 180;
+    const targetAngle = startAngle + radians;
+
+    const isInstant = this.state.speed === -1;
+    const totalSteps = isInstant
+      ? 1
+      : Math.max(1, Math.abs(degrees / this.state.speed));
+
+    for (let i = 1; i <= totalSteps; i++) {
+      if (this.currentExecutionId !== startId) return;
+
+      const progress = i / totalSteps;
+      this.state.angle = startAngle + (targetAngle - startAngle) * progress;
+
+      this._renderCursor();
+      if (!isInstant) await this._tick();
+    }
+
+    this.state.angle = targetAngle;
+  }
+
+  private _tick() {
+    return new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+
+  private _renderCursor() {
+    this.cursorCtx.clearRect(
+      0,
+      0,
+      this.cursorCtx.canvas.width,
+      this.cursorCtx.canvas.height,
+    );
+    if (!this.state.isVisible) return;
+
+    this.cursorCtx.save();
+    this.cursorCtx.translate(this.state.x, this.state.y);
+    this.cursorCtx.rotate(this.state.angle + Math.PI / 2);
+
+    this.cursorCtx.fillStyle = this.state.color;
+    this.cursorCtx.beginPath();
+    this.cursorCtx.moveTo(0, -10);
+    this.cursorCtx.lineTo(7, 10);
+    this.cursorCtx.lineTo(0, 5);
+    this.cursorCtx.lineTo(-7, 10);
+    this.cursorCtx.closePath();
+    this.cursorCtx.fill();
+
+    this.cursorCtx.restore();
+  }
+
+  private _getDefaultState(): TurtleState {
+    return {
+      x: this.drawCtx.canvas.width / 2,
+      y: this.drawCtx.canvas.height / 2,
+      angle: -Math.PI / 2,
+      penDown: true,
+      color: "white",
+      size: 2,
+      speed: 5,
+      isVisible: true,
+    };
+  }
+
+  async forward(n: number) {
+    await this._move(n);
+  }
+
+  async backward(n: number) {
+    await this._move(-n);
+  }
+
+  async right(deg: number) {
+    await this._rotate(deg);
+  }
+
+  async left(deg: number) {
+    await this._rotate(-deg);
+  }
+
+  async dot(size?: number, color?: string) {
+    const radius = size ? size / 2 : this.state.size * 2;
+    this.drawCtx.beginPath();
+    this.drawCtx.arc(this.state.x, this.state.y, radius, 0, Math.PI * 2);
+    this.drawCtx.fillStyle = color || this.state.color;
+    this.drawCtx.fill();
+    if (this.isFilling)
+      this.fillPath.push({ x: this.state.x, y: this.state.y });
+  }
+
+  async circle(radius: number, extent: number = 360) {
+    const steps = Math.floor(Math.abs(extent) / 2);
+    const stepDist = (2 * Math.PI * radius * (extent / 360)) / steps;
+    const stepAngle = extent / steps;
+
+    for (let i = 0; i < steps; i++) {
+      await this._move(stepDist);
+      await this._rotate(stepAngle);
+    }
+  }
+
+  async angle(targetDeg: number) {
+    const currentDeg = (this.state.angle * 180) / Math.PI;
+    let diff = targetDeg - currentDeg;
+    diff = ((diff + 180) % 360) - 180;
+    await this._rotate(diff);
+  }
+
+  pencolor(color: string) {
+    this.state.color = color;
+    this._renderCursor();
+  }
+
+  pensize(size: number) {
+    this.state.size = size;
+  }
+
+  goto(x: number, y: number) {
+    if (this.state.penDown) {
+      this.drawCtx.beginPath();
+      this.drawCtx.moveTo(this.state.x, this.state.y);
+      this.drawCtx.lineTo(x, y);
+      this.drawCtx.strokeStyle = this.state.color;
+      this.drawCtx.lineWidth = this.state.size;
+      this.drawCtx.stroke();
+    }
+    this.state.x = x;
+    this.state.y = y;
+    if (this.isFilling) this.fillPath.push({ x, y });
+    this._renderCursor();
+  }
+
+  setx(x: number) {
+    this.goto(x, this.state.y);
+  }
+
+  sety(y: number) {
+    this.goto(this.state.x, y);
+  }
+
+  setspeed(s: number) {
+    this.state.speed = s;
+  }
+
+  penup() {
+    this.state.penDown = false;
+  }
+
+  pendown() {
+    this.state.penDown = true;
+  }
+
+  hideturtle() {
+    this.state.isVisible = false;
+    this._renderCursor();
+  }
+
+  showturtle() {
+    this.state.isVisible = true;
+    this._renderCursor();
+  }
+
+  begin_fill() {
+    this.isFilling = true;
+    this.fillPath = [{ x: this.state.x, y: this.state.y }];
+  }
+
+  end_fill() {
+    if (!this.isFilling || this.fillPath.length < 3) return;
+
+    this.drawCtx.beginPath();
+    this.drawCtx.moveTo(this.fillPath[0].x, this.fillPath[0].y);
+    for (const point of this.fillPath) {
+      this.drawCtx.lineTo(point.x, point.y);
+    }
+    this.drawCtx.closePath();
+    this.drawCtx.fillStyle = this.state.color;
+    this.drawCtx.fill();
+
+    if (this.state.penDown) {
+      this.drawCtx.strokeStyle = this.state.color;
+      this.drawCtx.lineWidth = this.state.size;
+      this.drawCtx.stroke();
+    }
+
     this.isFilling = false;
     this.fillPath = [];
   }
 
-  isActive(): boolean {
-    return this.isFilling;
-  }
-}
-
-// ============================================================================
-// TURTLE RENDERER - Draws the turtle cursor
-// ============================================================================
-
-class TurtleRenderer {
-  private showTurtle = true;
-  private turtleSize = 15;
-
-  constructor(
-    private ctx: CanvasRenderingContext2D,
-    private state: TurtleState,
-  ) {}
-
-  draw(): void {
-    if (!this.showTurtle) return;
-
-    this.ctx.save();
-    this.ctx.translate(this.state.x, this.state.y);
-    this.ctx.rotate(this.state.angle + Math.PI / 2);
-
-    this.ctx.fillStyle = this.state.penColor;
-    this.ctx.strokeStyle = "rgba(0,0,0,0.5)";
-    this.ctx.lineWidth = 1;
-
-    const s = this.turtleSize;
-
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, -s / 2);
-    this.ctx.lineTo(s / 2, s / 2);
-    this.ctx.lineTo(0, s / 4);
-    this.ctx.lineTo(-s / 2, s / 2);
-    this.ctx.closePath();
-    this.ctx.fill();
-    this.ctx.stroke();
-
-    this.ctx.restore();
+  write(text: string, font: string = "16px Arial") {
+    this.drawCtx.save();
+    this.drawCtx.font = font;
+    this.drawCtx.fillStyle = this.state.color;
+    this.drawCtx.textAlign = "left";
+    this.drawCtx.textBaseline = "middle";
+    this.drawCtx.fillText(text, this.state.x, this.state.y);
+    this.drawCtx.restore();
   }
 
-  clear(): void {
-    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-  }
-
-  setVisibility(visible: boolean): void {
-    this.showTurtle = visible;
-    if (!visible) {
-      this.clear();
-    }
-  }
-
-  isVisible(): boolean {
-    return this.showTurtle;
-  }
-}
-
-// ============================================================================
-// ANIMATION HELPER - Provides smooth animations
-// ============================================================================
-
-class AnimationHelper {
-  private animationSpeed = 1; // Default speed multiplier
-
-  setSpeed(speed: number): void {
-    if (speed === 0) {
-      this.animationSpeed = Infinity; // Instant
-    } else {
-      this.animationSpeed = speed / 5;
-    }
-  }
-
-  calculateDuration(baseTime: number): number {
-    return baseTime / this.animationSpeed;
-  }
-
-  async animate(
-    duration: number,
-    callback: (progress: number) => void,
-  ): Promise<void> {
-    if (this.animationSpeed === Infinity) {
-      callback(1);
-      return;
-    }
-
-    const startTime = Date.now();
-
-    return new Promise<void>((resolve) => {
-      const frame = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        callback(this.easeInOutQuad(progress));
-
-        if (progress < 1) {
-          requestAnimationFrame(frame);
-        } else {
-          resolve();
-        }
-      };
-      requestAnimationFrame(frame);
-    });
-  }
-
-  private easeInOutQuad(t: number): number {
-    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-  }
-
-  sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-}
-
-// ============================================================================
-// MAIN TURTLE CANVAS CLASS
-// ============================================================================
-
-export class TurtleCanvas {
-  private static instance: TurtleCanvas | null = null;
-
-  private state: TurtleState;
-  private drawDrawer: CanvasDrawer;
-  private cursorDrawer: CanvasDrawer;
-  private fillManager: FillManager;
-  private renderer: TurtleRenderer;
-  private animator: AnimationHelper;
-  private drawCanvas: HTMLCanvasElement;
-  private cursorCanvas: HTMLCanvasElement
-  constructor(drawCanvas: HTMLCanvasElement, cursorCanvas: HTMLCanvasElement) {
-    const drawCtx = drawCanvas.getContext("2d")!;
-    const cursorCtx = cursorCanvas.getContext("2d")!;
-
-    this.state = {
-      x: drawCanvas.width / 2,
-      y: drawCanvas.height / 2,
-      angle: -Math.PI / 2, // Start pointing up
-      penDown: true,
-      penColor: "white",
-      penSize: 2,
-      fillColor: "white",
-    };
-
-    this.drawDrawer = new CanvasDrawer(drawCtx);
-    this.cursorDrawer = new CanvasDrawer(cursorCtx);
-    this.fillManager = new FillManager(drawCtx, this.state);
-    this.renderer = new TurtleRenderer(cursorCtx, this.state);
-    this.animator = new AnimationHelper();
-    this.drawCanvas = drawCanvas;
-    this.cursorCanvas = cursorCanvas;
-
-    // this.renderer.draw();
-    this.init();
-  }
-  private init(): void {
-    const drawCtx = this.drawCanvas.getContext("2d")!;
-    const cursorCtx = this.cursorCanvas.getContext("2d")!;
-
-    // Reset all internal state to defaults
-    this.state = {
-      x: this.drawCanvas.width / 2,
-      y: this.drawCanvas.height / 2,
-      angle: -Math.PI / 2,
-      penDown: true,
-      penColor: "white",
-      penSize: 2,
-      fillColor: "white",
-    };
-
-    this.drawDrawer = new CanvasDrawer(drawCtx);
-    this.cursorDrawer = new CanvasDrawer(cursorCtx);
-    this.fillManager = new FillManager(drawCtx, this.state);
-    this.renderer = new TurtleRenderer(cursorCtx, this.state);
-    this.animator = new AnimationHelper();
-
-    // Clear actual pixels
-    this.drawDrawer.clear();
-    this.cursorDrawer.clear();
-    this.renderer.draw();
-  }
-  public static getInstance(
-    drawCanvas?: HTMLCanvasElement,
-    cursorCanvas?: HTMLCanvasElement,
-  ): TurtleCanvas {
-    if (!TurtleCanvas.instance) {
-      if (!drawCanvas || !cursorCanvas) {
-        throw new Error(
-          "First call to TurtleCanvas.getInstance must provide canvas elements.",
-        );
-      }
-      TurtleCanvas.instance = new TurtleCanvas(drawCanvas, cursorCanvas);
-    }
-    return TurtleCanvas.instance;
-  }
-
-  // ============================================================================
-  // MOVEMENT COMMANDS
-  // ============================================================================
-
-  async forward(dist: number): Promise<void> {
-    const startX = this.state.x;
-    const startY = this.state.y;
-    const targetX = this.state.x + Math.cos(this.state.angle) * dist;
-    const targetY = this.state.y + Math.sin(this.state.angle) * dist;
-
-    const duration = this.animator.calculateDuration(Math.abs(dist) * 2);
-
-    await this.animator.animate(duration, (progress) => {
-      this.renderer.clear();
-
-      const currentX = startX + (targetX - startX) * progress;
-      const currentY = startY + (targetY - startY) * progress;
-
-      if (this.state.penDown) {
-        this.drawDrawer.drawLine(
-          startX,
-          startY,
-          currentX,
-          currentY,
-          this.state.penColor,
-          this.state.penSize,
-        );
-      }
-
-      this.state.x = currentX;
-      this.state.y = currentY;
-      this.renderer.draw();
-    });
-
-    this.state.x = targetX;
-    this.state.y = targetY;
-    this.fillManager.addPoint(this.state.x, this.state.y);
-  }
-
-  async backward(dist: number): Promise<void> {
-    return this.forward(-dist);
-  }
-
-  async right(deg: number): Promise<void> {
-    const startAngle = this.state.angle;
-    const targetAngle = this.state.angle + (deg * Math.PI) / 180;
-    const duration = this.animator.calculateDuration(Math.abs(deg) * 3);
-
-    await this.animator.animate(duration, (progress) => {
-      this.renderer.clear();
-      this.state.angle = startAngle + (targetAngle - startAngle) * progress;
-      this.renderer.draw();
-    });
-
-    this.state.angle = targetAngle;
-  }
-
-  async left(deg: number): Promise<void> {
-    return this.right(-deg);
-  }
-
-  async goto(x: number, y: number): Promise<void> {
-    const startX = this.state.x;
-    const startY = this.state.y;
-    const distance = Math.sqrt(
-      Math.pow(x - startX, 2) + Math.pow(y - startY, 2),
-    );
-    const duration = this.animator.calculateDuration(distance * 2);
-
-    await this.animator.animate(duration, (progress) => {
-      this.renderer.clear();
-
-      const currentX = startX + (x - startX) * progress;
-      const currentY = startY + (y - startY) * progress;
-
-      if (this.state.penDown) {
-        this.drawDrawer.drawLine(
-          startX,
-          startY,
-          currentX,
-          currentY,
-          this.state.penColor,
-          this.state.penSize,
-        );
-      }
-
-      this.state.x = currentX;
-      this.state.y = currentY;
-      this.renderer.draw();
-    });
-
-    this.state.x = x;
-    this.state.y = y;
-    this.fillManager.addPoint(this.state.x, this.state.y);
-  }
-
-  async move(dx: number, dy: number): Promise<void> {
-    return this.goto(this.state.x + dx, this.state.y + dy);
-  }
-
-  async setx(x: number): Promise<void> {
-    return this.goto(x, this.state.y);
-  }
-
-  async sety(y: number): Promise<void> {
-    return this.goto(this.state.x, y);
-  }
-
-  async angle(angle: number): Promise<void> {
-    const startAngle = this.state.angle;
-    const targetAngle = (angle * Math.PI) / 180;
-    const angleDiff = Math.abs(targetAngle - startAngle);
-    const duration = this.animator.calculateDuration(
-      ((angleDiff * 180) / Math.PI) * 3,
-    );
-
-    await this.animator.animate(duration, (progress) => {
-      this.renderer.clear();
-      this.state.angle = startAngle + (targetAngle - startAngle) * progress;
-      this.renderer.draw();
-    });
-
-    this.state.angle = targetAngle;
-  }
-
-  async home(): Promise<void> {
-    await this.goto(
-      this.drawDrawer.canvas.width / 2,
-      this.drawDrawer.canvas.height / 2,
-    );
-    await this.angle(90);
-  }
-
-  async circle(
-    radius: number,
-    extent: number = 360,
-    steps?: number,
-  ): Promise<void> {
-    if (!steps) {
-      steps = Math.max(24, Math.floor(Math.abs(radius)));
-    }
-
-    const angleStep = (extent * Math.PI) / 180 / steps;
-    const stepLength = 2 * Math.abs(radius) * Math.sin(Math.abs(angleStep) / 2);
-    const turnDirection = radius > 0 ? 1 : -1;
-    const duration = this.animator.calculateDuration(Math.abs(extent) * 5);
-
-    const startX = this.state.x;
-    const startY = this.state.y;
-    const startAngle = this.state.angle;
-
-    await this.animator.animate(duration, (progress) => {
-      this.renderer.clear();
-
-      const currentSteps = Math.floor(steps! * progress);
-      this.state.x = startX;
-      this.state.y = startY;
-      this.state.angle = startAngle;
-
-      for (let i = 0; i < currentSteps; i++) {
-        const newX = this.state.x + Math.cos(this.state.angle) * stepLength;
-        const newY = this.state.y + Math.sin(this.state.angle) * stepLength;
-
-        if (this.state.penDown) {
-          this.drawDrawer.drawLine(
-            this.state.x,
-            this.state.y,
-            newX,
-            newY,
-            this.state.penColor,
-            this.state.penSize,
-          );
-        }
-
-        this.state.x = newX;
-        this.state.y = newY;
-        this.state.angle -= (turnDirection * (extent / steps!) * Math.PI) / 180;
-      }
-
-      this.renderer.draw();
-    });
-
-    this.fillManager.addPoint(this.state.x, this.state.y);
-  }
-
-  // ============================================================================
-  // PEN CONTROL
-  // ============================================================================
-
-  async penup(): Promise<void> {
-    this.state.penDown = false;
-  }
-
-  async pendown(): Promise<void> {
-    this.state.penDown = true;
-  }
-
-  async pensize(size: number): Promise<void> {
-    this.state.penSize = size;
-  }
-
-  async pencolor(color: string): Promise<void> {
-    this.state.penColor = color;
-  }
-
-  async fillcolor(color: string): Promise<void> {
-    this.state.fillColor = color;
-  }
-
-  async color(color: string): Promise<void> {
-    this.state.penColor = color;
-    this.state.fillColor = color;
-  }
-
-  // ============================================================================
-  // FILL COMMANDS
-  // ============================================================================
-
-  async begin_fill(): Promise<void> {
-    this.fillManager.begin(this.state.x, this.state.y);
-  }
-
-  async end_fill(): Promise<void> {
-    this.fillManager.end();
-  }
-
-  // ============================================================================
-  // DRAWING COMMANDS
-  // ============================================================================
-
-  async dot(size?: number, color?: string): Promise<void> {
-    const dotSize = size || this.state.penSize * 2;
-    this.drawDrawer.drawDot(
-      this.state.x,
-      this.state.y,
-      dotSize,
-      color || this.state.penColor,
+  clear() {
+    this.drawCtx.clearRect(
+      0,
+      0,
+      this.drawCtx.canvas.width,
+      this.drawCtx.canvas.height,
     );
   }
 
-  async stamp(): Promise<void> {
-    this.drawDrawer.drawStamp(
-      this.state.x,
-      this.state.y,
-      this.state.angle,
-      this.state.penColor,
+  reset() {
+    this.currentExecutionId++;
+    this.clear();
+    this.cursorCtx.clearRect(
+      0,
+      0,
+      this.cursorCtx.canvas.width,
+      this.cursorCtx.canvas.height,
     );
-  }
-
-  async write(text: string, font: string = "16px Arial"): Promise<void> {
-    this.drawDrawer.drawText(
-      this.state.x,
-      this.state.y,
-      text,
-      font,
-      this.state.penColor,
-    );
-  }
-
-  // ============================================================================
-  // CANVAS CONTROL
-  // ============================================================================
-
-  async clear(): Promise<void> {
-    this.drawDrawer.clear();
-  }
-
-  async reset(): Promise<void> {
-    this.init();
-    // this.state.x = this.drawDrawer.canvas.width / 2;
-    // this.state.y = this.drawDrawer.canvas.height / 2;
-    // this.state.angle = -Math.PI / 2;
-    // this.state.penDown = true;
-    // this.state.penColor = "white";
-    // this.state.penSize = 2;
-    // this.state.fillColor = "white";
-
-    // this.drawDrawer.clear();
-    // this.cursorDrawer.clear();
-    // this.renderer.draw();
-  }
-
-  // ============================================================================
-  // UTILITY METHODS
-  // ============================================================================
-
-  async speed(s: number): Promise<void> {
-    this.animator.setSpeed(s);
-  }
-
-  async hideturtle(): Promise<void> {
-    this.renderer.setVisibility(false);
-  }
-
-  async showturtle(): Promise<void> {
-    this.renderer.setVisibility(true);
-  }
-
-  position(): [number, number] {
-    return [this.state.x, this.state.y];
-  }
-
-  heading(): number {
-    return ((this.state.angle * 180) / Math.PI) % 360;
-  }
-
-  distance(x: number, y: number): number {
-    return Math.sqrt(
-      Math.pow(x - this.state.x, 2) + Math.pow(y - this.state.y, 2),
-    );
-  }
-
-  towards(x: number, y: number): number {
-    const angle = Math.atan2(y - this.state.y, x - this.state.x);
-    return ((angle * 180) / Math.PI) % 360;
-  }
-
-  isdown(): boolean {
-    return this.state.penDown;
-  }
-
-  width(): number {
-    return this.drawDrawer.canvas.width;
-  }
-
-  height(): number {
-    return this.drawDrawer.canvas.height;
+    this.state = this._getDefaultState();
+    this.isFilling = false;
+    this.fillPath = [];
+    this._renderCursor();
   }
 }

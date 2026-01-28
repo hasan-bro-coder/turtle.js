@@ -306,12 +306,11 @@ export default class Parser {
         const number = this.parse_expr();
         if (this.err) return {} as Stmt;
         const body = this.parse_block_stmt();
-        if (this.err) return {} as Stmt;
-
+        if (this.err) return {} as Stmt;        
         return {
           kind: "ForStmt",
           body,
-          varname: (name as StringLiteral).value,
+          varname: (name as Identifier).symbol,
           amount: number,
         } as ForStmt;
       }

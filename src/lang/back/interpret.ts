@@ -153,6 +153,8 @@ class Interpreter {
         const condition = (await this.evaluate(ifstmt.condition)) as BooleanVal;
         if (condition.value) {
             return await this.evaluate_body(ifstmt.body);
+        }else if(ifstmt.alternate){
+            return await this.evaluate_body(ifstmt.alternate);
         }
         return MK_NULL();
     }

@@ -7,9 +7,9 @@ import { defaultKeymap } from "@codemirror/commands";
 import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 import Console from "./console";
-import { turtle } from "./module";
 import { codeCompletions } from "./lang/editor/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
+import { TurtleCanvas } from "./canvas";
 
 const STORAGE_KEY = "turtle_js_code_autosave";
 const getSavedCode = (): string => {
@@ -103,9 +103,10 @@ import("./lang/run").then((module) => {
   run = module.run;
 });
 
-function runCode() {
+async function runCode() {
   const code = editor.state.doc.toString();
-  turtle.reset();
+  await TurtleCanvas.getInstance().reset();
+
   run(code + "\n");
   console.log(code);
 }

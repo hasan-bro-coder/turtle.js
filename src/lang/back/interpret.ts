@@ -19,20 +19,68 @@ import Environment from "./env.ts";
 class Interpreter {
     public err: boolean = false;
     public errMessage: string = "";
-    private globalEnv: Environment;
+    public globalEnv: Environment;
+    private interrupted: boolean = false;
+    private isRunning: boolean = false;
 
     constructor(env: Environment) {
         this.globalEnv = env;
     }
 
-    public eval_program(program: Program): RuntimeVal {
-        let lastEvaluated: RuntimeVal = MK_NULL();
-        for (const statement of program.body) {
-            if (this.err) {
-                break;
-            }
-            lastEvaluated = this.evaluate(statement);
+    public interrupt(): void {
+        this.interrupted = true;
+        console.log("Interpreter: Program interrupted");
+    }
+
+    /**
+     * Reset the interpreter state for a new program
+     */
+    public reset(): void {
+        this.err = false;
+        this.errMessage = "";
+        this.interrupted = false;
+    }
+
+    /**
+     * Check if execution should stop
+     */
+    private shouldStop(): boolean {
+        return this.err || this.interrupted;
+    }
+
+    /**
+     * Check if interpreter is currently running a program
+     */
+    public getIsRunning(): boolean {
+        return this.isRunning;
+    }
+
+    public async eval_program(program: Program): Promise<RuntimeVal> {
+        // If already running, interrupt the previous execution
+        if (this.isRunning) {
+            console.log("Interpreter: Already running, interrupting previous program");
+            this.interrupt();
+            // Give it a moment to stop
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
+
+        this.reset(); // Reset state at start of new program
+        this.isRunning = true;
+
+        let lastEvaluated: RuntimeVal = MK_NULL();
+        
+        try {
+            for (const statement of program.body) {
+                if (this.shouldStop()) {
+                    console.log("Interpreter: Execution stopped");
+                    break;
+                }
+                lastEvaluated = await this.evaluate(statement);
+            }
+        } finally {
+            this.isRunning = false;
+        }
+
         return lastEvaluated;
     }
 
@@ -66,9 +114,9 @@ class Interpreter {
         return { value: result } as BooleanVal;
     }
 
-    private eval_binary_expr(binop: BinaryExpr): RuntimeVal {
-        const lhs = this.evaluate(binop.left);
-        const rhs = this.evaluate(binop.right);
+    private async eval_binary_expr(binop: BinaryExpr): Promise<RuntimeVal> {
+        const lhs = await this.evaluate(binop.left);
+        const rhs = await this.evaluate(binop.right);
 
         if (lhs.type == "number" && rhs.type == "number") {
             return this.eval_numeric_binary_expr(lhs as NumberVal, rhs as NumberVal, binop.operator);
@@ -93,40 +141,40 @@ class Interpreter {
         return val;
     }
 
-    private eval_var(declaration: VarStmt): RuntimeVal {
-        const value = declaration.value ? this.evaluate(declaration.value) : MK_NULL();
+    private async eval_var(declaration: VarStmt): Promise<RuntimeVal> {
+        const value = (declaration.value ? await this.evaluate(declaration.value) : MK_NULL());
         if (this.globalEnv.variables.has(declaration.name)) {
             return this.globalEnv.assignVar(declaration.name, value);
         }
         return this.globalEnv.declareVar(declaration.name, value);
     }
 
-    private eval_if(ifstmt: IfStmt): RuntimeVal {
-        const condition = this.evaluate(ifstmt.condition) as BooleanVal;
+    private async eval_if(ifstmt: IfStmt): Promise<RuntimeVal> {
+        const condition = (await this.evaluate(ifstmt.condition)) as BooleanVal;
         if (condition.value) {
-            return this.evaluate_body(ifstmt.body);
+            return await this.evaluate_body(ifstmt.body);
         }
         return MK_NULL();
     }
 
-    private eval_loop(stmt: LoopStmt): RuntimeVal {
-        let condition = this.evaluate(stmt.condition) as BooleanVal;
+    private async eval_loop(stmt: LoopStmt): Promise<RuntimeVal> {
+        let condition = (await this.evaluate(stmt.condition)) as BooleanVal;
         let result: RuntimeVal = MK_NULL();
-        while (condition.value) {
-            result = this.evaluate_body(stmt.body);
-            condition = this.evaluate(stmt.condition) as BooleanVal;
+        while (condition.value && !this.shouldStop()) {
+            result = await this.evaluate_body(stmt.body);
+            condition = (await this.evaluate(stmt.condition)) as BooleanVal;
         }
         return result;
     }
 
-    private eval_for(stmt: ForStmt): RuntimeVal {
-        let condition = this.evaluate(stmt.amount) as NumberVal;
+    private async eval_for(stmt: ForStmt): Promise<RuntimeVal> {
+        let condition = (await this.evaluate(stmt.amount)) as NumberVal;
         let result: RuntimeVal = MK_NULL();
         let i = 0;
         this.globalEnv.declareVar(stmt.varname, { value: i, type: "number" } as NumberVal);
-        while (i < condition.value) {
+        while (i < condition.value && !this.shouldStop()) {
             i++;
-            result = this.evaluate_body(stmt.body);
+            result = await this.evaluate_body(stmt.body);
             this.globalEnv.assignVar(stmt.varname, { value: i, type: "number" } as NumberVal);
         }
         return result;
@@ -134,19 +182,19 @@ class Interpreter {
 
     
 
-    public eval_func_run(stmt: FuncExpr): RuntimeVal {
+    public async eval_func_run(stmt: FuncExpr): Promise<RuntimeVal> {
         let func = this.globalEnv.getFunc(stmt.funcname);
         if (func.builtin && func.run) {
-            const evaluatedArgs = stmt.props.map(arg => this.evaluate(arg));
-            return func.run(evaluatedArgs);
+            const evaluatedArgs = stmt.props.map(async arg => await this.evaluate(arg));
+            return await func.run(evaluatedArgs);
         }
         if (func.args.length != stmt.props.length) {
             this.errMessage = `Function ${stmt.funcname} expected ${func.args.length} arguments but got ${stmt.props.length}.`;
             this.err = true;
             return MK_NULL();
         }
-        func.args.forEach((arg, index) => {
-            this.globalEnv.declareVar(arg, this.evaluate(stmt.props[index]));
+        func.args.forEach(async (arg, index) => {
+            this.globalEnv.declareVar(arg, await this.evaluate(stmt.props[index]));
         });
         return this.evaluate_body(func.body);
     }
@@ -156,18 +204,23 @@ class Interpreter {
         return MK_NULL();
     }
 
-    private evaluate_body(astNode: Stmt[]): RuntimeVal {
+    private async evaluate_body(astNode: Stmt[]): Promise<RuntimeVal> {
         let result: RuntimeVal = MK_NULL();
         for (const stmt of astNode) {
-            if (this.err) {
+            if (this.shouldStop()) {
                 break;
             }
-            result = this.evaluate(stmt);
+            result = await this.evaluate(stmt);
         }
         return result;
     }
 
-    public evaluate(astNode: Stmt): RuntimeVal {
+    public async evaluate(astNode: Stmt): Promise<RuntimeVal> {
+        // Check for interruption before evaluating each statement
+        if (this.shouldStop()) {
+            return MK_NULL();
+        }
+
         switch (astNode.kind) {
             case "NumericLiteral":
                 return { value: ((astNode as NumericLiteral).value), type: "number" } as NumberVal;
@@ -181,8 +234,8 @@ class Interpreter {
                 return this.eval_program(astNode as Program);
             case "LogicalExpr":
                 return this.eval_boolean_logical_expr(
-                    this.evaluate((astNode as LogicalExpr).left) as NumberVal | BooleanVal,
-                    this.evaluate((astNode as LogicalExpr).right) as NumberVal | BooleanVal,
+                    await this.evaluate((astNode as LogicalExpr).left) as NumberVal | BooleanVal,
+                    await this.evaluate((astNode as LogicalExpr).right) as NumberVal | BooleanVal,
                     (astNode as LogicalExpr).operator,
                 );
             case "VarStmt":
@@ -196,7 +249,7 @@ class Interpreter {
             case "FuncStmt":
                 return this.eval_func(astNode as FuncStmt);
             case "FuncExpr":
-                return this.eval_func_run(astNode as FuncExpr);
+                return await this.eval_func_run(astNode as FuncExpr);
             default:
                 this.errMessage = "This AST Node has not yet been setup for interpretation " + astNode;
                 return MK_NULL();

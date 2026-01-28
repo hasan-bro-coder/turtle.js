@@ -16,7 +16,7 @@ export default class Environment {
 
   public builtins(){
     this
-    .addBuilitinFunc("join", 2, (args: RuntimeVal[]) => {
+    .addBuilitinFunc("join", 2, async (args:Promise<RuntimeVal>[]) => {
       // @ts-ignore
       return {value: args[0].value + args[1].value, type: "string"} as StringVal;
     })
@@ -25,7 +25,7 @@ export default class Environment {
   public addBuilitinFunc(
     name: string,
     args: number,
-    run: (args: RuntimeVal[]) => RuntimeVal
+    run: (args: Promise<RuntimeVal>[]) => Promise<RuntimeVal>
   ){
     this.setFunc({
       type: "function",

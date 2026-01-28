@@ -6,11 +6,14 @@ import Interpreter from "./back/interpret.ts";
 import Environment from "./back/env.ts";
 // let env
 import { env } from "../module.ts";
+
+
+let evaluate = new Interpreter(new Environment(env));
 export function run(code: string) {
   let lexer = new Lexer(code);
   let tokens = lexer.tokenize();
-  console.log(tokens);
-  Console.print(JSON.stringify(tokens,null,2));
+  // console.log(tokens);
+  // Console.print(JSON.stringify(tokens,null,2));
   if (lexer.err == true) {
     Console.error("Lexer error: " + lexer.errMessage);
     return;
@@ -22,16 +25,19 @@ export function run(code: string) {
   } as Program;
   let parser = new Parser();
   ast = parser.produceAST(tokens);
-  console.dir(ast);
-  Console.print(JSON.stringify(ast,null,2))
+  // console.dir(ast);
+  // Console.print(JSON.stringify(ast,null,2))
   if (parser.err == true) {
     Console.error("Parser error: " + parser.errMessage);
     return
 
   }
   console.log("----------ast---------");
-
-  let evaluate = new Interpreter(new Environment(env));
+  if (evaluate.getIsRunning()){
+    evaluate.interrupt();
+    evaluate = new Interpreter(new Environment(env));
+  }
+  evaluate.globalEnv = new Environment(env);
   evaluate.evaluate(ast);
   if (evaluate.err == true) {
     Console.error("Runtime error: " + evaluate.errMessage);
@@ -46,7 +52,7 @@ export function run(code: string) {
 // fn sum() do
 //  1+1
 // end
-// print [sum]
+// sum
 // `);
 
 // import Parser from "./front/parser.ts";

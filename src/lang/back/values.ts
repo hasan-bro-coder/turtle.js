@@ -49,7 +49,7 @@ export interface FuncVal extends RuntimeVal {
   args: string[];
   body: Stmt[];
   builtin: boolean;
-  run?: (args: RuntimeVal[]) => RuntimeVal;
+  run?: (args: Promise<RuntimeVal>[]) => Promise<RuntimeVal>;
   value: null
 }
 

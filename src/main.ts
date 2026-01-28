@@ -30,20 +30,20 @@ const autoSaveExtension = EditorView.updateListener.of((update) => {
 let startState = EditorState.create({
   doc:
     getSavedCode() ||
-    `base = [randint 40,100]
-adj = [randint 40,100]
-hype = [sqrt ([pow base,2] + [pow adj,2])]
-
-showpen
-bfill
-right 90
-forward base
-left 90
-forward adj
-left 180-[deg [atan base / adj]]
-forward hype
-hidepen
-efill`,
+    `loop true do
+    hidepen
+    base = [randint 10,150]
+    adj = [randint 10,150]
+    hype = [sqrt ([pow base,2] + [pow adj,2])]
+    right 90
+    forward base
+    left 90
+    forward adj
+    left 180-[deg [atan base / adj]]
+    forward hype
+    wait 1000
+    reset
+end `,
   extensions: [
     oneDark,
     keymap.of(defaultKeymap),
@@ -58,9 +58,6 @@ const editor = new EditorView({
   parent: document.querySelector("#editor-container")!,
 });
 
-
-
-
 const exportBtn = document.getElementById("exportBtn") as HTMLButtonElement;
 const importBtn = document.getElementById("importBtn") as HTMLButtonElement;
 const fileInput = document.getElementById("fileInput") as HTMLInputElement;
@@ -68,18 +65,18 @@ exportBtn.addEventListener("click", () => {
   const code = editor.state.doc.toString();
   const blob = new Blob([code], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement("a");
   link.download = "my_turtle_art.turtle";
   link.href = url;
   link.click();
-  
+
   URL.revokeObjectURL(url);
   console.log("Code exported successfully");
 });
 
 importBtn.addEventListener("click", () => {
-  fileInput.click(); 
+  fileInput.click();
 });
 
 fileInput.addEventListener("change", (event) => {
@@ -95,18 +92,16 @@ fileInput.addEventListener("change", (event) => {
       changes: {
         from: 0,
         to: editor.state.doc.length,
-        insert: content
-      }
+        insert: content,
+      },
     });
-    
+
     console.log("Code imported successfully");
-    target.value = ""; 
+    target.value = "";
   };
-  
+
   reader.readAsText(file);
 });
-
-
 
 Console.initialize("console-output");
 const canvas = document.getElementById("turtleCanvas") as HTMLCanvasElement;
@@ -161,9 +156,9 @@ import("./lang/run").then((module) => {
 async function runCode() {
   const code = editor.state.doc.toString();
   // await TurtleCanvas.reset();
-  await turtle.reset();
+  turtle.reset();
   run(code + "\n");
-  console.log(code);
+  // console.log(code);
 }
 
 document

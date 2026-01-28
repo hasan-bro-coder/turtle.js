@@ -12,7 +12,7 @@ let evaluate = new Interpreter(new Environment(env));
 export function run(code: string) {
   let lexer = new Lexer(code);
   let tokens = lexer.tokenize();
-  // console.log(tokens);
+  console.table(tokens);
   // Console.print(JSON.stringify(tokens,null,2));
   if (lexer.err == true) {
     Console.error("Lexer error: " + lexer.errMessage);
@@ -25,7 +25,7 @@ export function run(code: string) {
   } as Program;
   let parser = new Parser();
   ast = parser.produceAST(tokens);
-  // console.dir(ast);
+  console.dir(ast);
   // Console.print(JSON.stringify(ast,null,2))
   if (parser.err == true) {
     Console.error("Parser error: " + parser.errMessage);

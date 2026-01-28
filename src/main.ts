@@ -28,17 +28,20 @@ const autoSaveExtension = EditorView.updateListener.of((update) => {
 let startState = EditorState.create({
   doc:
     getSavedCode() ||
-    `print "hello"
-num_steps = 60
-step_size = 10
-turn_angle = 120
+    `base = [randint 40,100]
+adj = [randint 40,100]
+hype = [sqrt ([pow base,2] + [pow adj,2])]
 
-
-for i num_steps do
-    forward step_size
-    left turn_angle
-    step_size = step_size + 10
-end`,
+showpen
+bfill
+right 90
+forward base
+left 90
+forward adj
+left 180-[deg [atan base / adj]]
+forward hype
+hidepen
+efill`,
   extensions: [
     oneDark,
     keymap.of(defaultKeymap),

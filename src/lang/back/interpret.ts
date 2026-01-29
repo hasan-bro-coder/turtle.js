@@ -199,10 +199,15 @@ class Interpreter {
     let condition = (await this.evaluate(stmt.amount)) as NumberVal;
     let result: RuntimeVal = MK_NULL();
     let i = 0;
-    this.globalEnv.declareVar(stmt.varname, {
+    let value = {
       value: i,
       type: "number",
-    } as NumberVal);
+    } as NumberVal
+    if (this.globalEnv.variables.has(stmt.varname)) {
+      this.globalEnv.assignVar(stmt.varname, value);
+    }else{
+      this.globalEnv.declareVar(stmt.varname, value);
+    }
     while (i < condition.value && !this.shouldStop()) {
       i++;
       result = await this.evaluate_body(stmt.body);

@@ -1,3 +1,4 @@
+import Console from "../../console.ts";
 import { FuncVal, RuntimeVal, StringVal } from "./values.ts";
 
 export default class Environment {
@@ -16,7 +17,7 @@ export default class Environment {
 
   public builtins(){
     this
-    .addBuilitinFunc("join", 2, async (args:Promise<RuntimeVal>[]) => {
+    .addBuilitinFunc("join", async (args:Promise<RuntimeVal>[]) => {
       // @ts-ignore
       return {value: args[0].value + args[1].value, type: "string"} as StringVal;
     })
@@ -24,13 +25,12 @@ export default class Environment {
 
   public addBuilitinFunc(
     name: string,
-    args: number,
     run: (args: Promise<RuntimeVal>[]) => Promise<RuntimeVal>
   ){
     this.setFunc({
       type: "function",
       name,
-      args: new Array(args).fill("arg"),
+      args: [],
       body: [],
       builtin: true,
       run,
@@ -49,7 +49,7 @@ export default class Environment {
   public getFunc(name: string): FuncVal {
     if (this.parent == undefined) {
       if (!this.funcs.has(name)) {
-        console.error(`Cannot resolve '${name}' as it does not exist.`)
+        Console.error(`Cannot resolve '${name}' as it does not exist.`)
       }
       return this.funcs.get(name) as FuncVal;
     }
@@ -65,7 +65,7 @@ export default class Environment {
 
   public declareVar(varname: string, value: RuntimeVal): RuntimeVal {
     if (this.variables.has(varname)) {
-      console.error(`Cannot declare variable ${varname}. As it already is defined.`);
+      Console.error(`Cannot declare variable ${varname}. As it already is defined.`);
     }
 
     this.variables.set(varname, value);
@@ -89,7 +89,7 @@ export default class Environment {
     }
 
     if (this.parent == undefined) {
-      console.error(`Cannot resolve '${varname}' as it does not exist.`);
+      Console.error(`Cannot resolve '${varname}' as it does not exist.`);
       return this;
     }
 

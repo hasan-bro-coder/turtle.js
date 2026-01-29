@@ -10,6 +10,7 @@ import { env } from "../module.ts";
 
 let evaluate = new Interpreter(new Environment(env));
 export function run(code: string) {
+  console.clear();
   let lexer = new Lexer(code);
   let tokens = lexer.tokenize();
   console.table(tokens);

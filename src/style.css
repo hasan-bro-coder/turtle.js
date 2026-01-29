@@ -106,12 +106,19 @@ canvas {
   overflow-y: auto;
 }
 
-.console-header {
+#console-container #console-bar{
+  display: flex;
+  justify-content: space-between;
+
+}
+
+.console-header , .console-clear {
   padding: 5px 15px;
   background: var(--bg-color);
   font-size: 12px;
   color: #888;
   text-transform: uppercase;
+  cursor:pointer;
 }
 
 #console-output {

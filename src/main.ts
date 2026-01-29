@@ -3,6 +3,7 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { defaultKeymap } from "@codemirror/commands";
+import { insertTab, indentLess } from '@codemirror/commands';
 import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 import Console from "./console";
@@ -16,6 +17,9 @@ const getSavedCode = (): string => {
     localStorage.getItem(STORAGE_KEY) || `forward 100\nright 90\nforward 100`
   );
 };
+
+
+
 const autoSaveExtension = EditorView.updateListener.of((update) => {
   if (update.docChanged) {
     const code = update.state.doc.toString();
@@ -23,6 +27,8 @@ const autoSaveExtension = EditorView.updateListener.of((update) => {
     console.log("Saved to local storage");
   }
 });
+
+
 
 let startState = EditorState.create({
   doc:
@@ -45,6 +51,10 @@ end`,
     python(),
     autocompletion({ override: [codeCompletions] }),
     autoSaveExtension,
+    keymap.of([
+    { key: 'Tab', preventDefault: true, run: insertTab },
+    { key: 'Shift-Tab', preventDefault: true, run: indentLess }
+  ])
   ],
 });
 const editor = new EditorView({
@@ -144,7 +154,9 @@ if (isMobile()){
 
 
 Console.initialize("console-output");
-
+(document.querySelector<HTMLDivElement>(".console-clear")!).onclick = ()=>{
+  Console.clear()
+}
 
 
 const consoleBtn = document.getElementById(

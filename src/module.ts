@@ -104,16 +104,12 @@ environment
   })
   .addBuilitinFunc("color", async (args: Promise<RuntimeVal>[]) => {
     if (args.length === 1) {
-      // Handle: color "red" or color "#ff0000"
       const colorVal = ((await args[0]) as StringVal).value;
       turtle.pencolor(colorVal);
     } else if (args.length === 3) {
-      // Handle: color 255 0 0
       const r = ((await args[0]) as NumberVal).value;
       const g = ((await args[1]) as NumberVal).value;
       const b = ((await args[2]) as NumberVal).value;
-
-      // Construct CSS RGB string
       const rgbString = `rgb(${r}, ${g}, ${b})`;
       turtle.pencolor(rgbString);
     } else {
@@ -303,19 +299,13 @@ environment
   })
 
   .addBuilitinFunc("print", async (args: Promise<RuntimeVal>[]) => {
-    // 1. Resolve all promises in the args array
     const resolvedArgs = await Promise.all(args);
-
-    // 2. Map the values to strings and join them with a space
     const output = resolvedArgs
       .map((arg) => String((arg as any).value))
       .join(" ");
-
-    // 3. Output to your custom Console and the browser console
     //@ts-ignore
     Console.print(output);
     console.log(output);
-
     return MK_NULL();
   });
 

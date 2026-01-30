@@ -89,15 +89,12 @@ canvas {
 }
 
 #editor-container {
-  flex: 3; /* Editor takes 75% height */
+  flex: 3;
   overflow: hidden;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-  
 }
 
 #console-container {
-  flex: 1.25; /* Console takes 25% height */
+  flex: 1.25;
   background: var(--bg-color);
   border-top: 1px solid #ffffff;
   display: flex;
@@ -147,26 +144,25 @@ canvas {
 
 .mobile-symbol-bar {
   display: flex;
-  background: #282c34ce; /* Match your editor background */
+  background: #282c34ce;
   border-top: 1px solid #333;
   overflow-x: auto;
   white-space: nowrap;
-  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
   touch-action: manipulation;
 }
 
 .mobile-symbol-bar::-webkit-scrollbar {
-  display: none; /* Hide scrollbar for Chrome/Safari */
+  display: none;
 }
 
 .sym-btn {
-  flex: 1; /* Stretch buttons to fill space, or use min-width: 40px */
+  flex: 1; 
   min-width: 40px;
   height: 25px;
   background: transparent;
   color: #d4d4d4;
   border: none;
-  /* The separator logic */
   border-right: 1px solid var(--accent);
   font-family: monospace;
   font-size: 15px;
@@ -177,18 +173,16 @@ canvas {
   transition: background 0.2s;
 }
 
-/* Remove the last border so it looks clean */
+
 .sym-btn:last-child {
   border-right: none;
 }
 
-/* Visual feedback for touch */
 .sym-btn:active {
   background: #37373d;
   color: #ffffff;
 }
 
-/* Mobile Responsiveness */
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
@@ -198,19 +192,17 @@ canvas {
   #editor-container, #canvas-container {
     flex: none;
     width: 100%;
-    height: 47vh; /* Split half and half on mobile */
+    height: 47vh; 
   }
   #console-container {
     display: none;
   }
-  #editor-container { border-right: none; border-bottom: 2px solid #ffffff; }
 }
 .mobile-only { display: none; }
 
 @media (max-width: 768px) {
   .mobile-only { display: inline-block; margin-right: 10px; }
 
-  /* When this class is added via JS, the console becomes a modal */
   #console-container.mobile-show {
     display: flex !important;
     position: fixed;
@@ -230,30 +222,29 @@ canvas {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
-/* CodeMirror height fix */
+
 .cm-editor { height: 100%; }
 
 ::-webkit-scrollbar {
-  width: 8px;              /* Controls the width of the vertical scrollbar */
-  height: 8px;             /* Controls the height of the horizontal scrollbar */
+  width: 8px;              
+  height: 8px;             
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;     /* The "path" the scrollbar travels in */
+  background: #1a1a1a;     
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #000000;     /* The actual draggable handle */
-  border-radius: 10px;     /* Makes it look sleek and rounded */
-  border: 1px solid #333;  /* Optional: adds a slight separation */
+  background: #000000;     
+  border-radius: 10px;     
+  border: 1px solid #333;  
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #333333;     /* Subtle change when hovered */
+  background: #333333;    
 }
 
-/* 2. For Firefox (Modern Standard) */
 * {
-  scrollbar-width: thin;          /* Options: "auto", "thin", or "none" */
-  scrollbar-color: #000000 #1a1a1a; /* thumb color | track color */
+  scrollbar-width: thin;          
+  scrollbar-color: #000000 #1a1a1a; 
 }

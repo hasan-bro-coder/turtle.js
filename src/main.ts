@@ -1,13 +1,18 @@
 import "./style.css";
 import { EditorState } from "@codemirror/state";
+import { foldGutter, codeFolding } from "@codemirror/language";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { defaultKeymap } from "@codemirror/commands";
-import { insertTab, indentLess } from '@codemirror/commands';
-import { python } from "@codemirror/lang-python";
+import { insertTab, indentLess } from "@codemirror/commands";
+// import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 import Console from "./console";
-import { codeCompletions } from "./lang/editor/autocomplete";
+import {
+  codeCompletions,
+  turtleFoldService,
+  turtleHighlight,
+} from "./lang/editor/languge";
 import { autocompletion } from "@codemirror/autocomplete";
 import { turtle } from "./module";
 
@@ -18,8 +23,6 @@ const getSavedCode = (): string => {
   );
 };
 
-
-
 const autoSaveExtension = EditorView.updateListener.of((update) => {
   if (update.docChanged) {
     const code = update.state.doc.toString();
@@ -27,8 +30,6 @@ const autoSaveExtension = EditorView.updateListener.of((update) => {
     console.log("Saved to local storage");
   }
 });
-
-
 
 let startState = EditorState.create({
   doc:
@@ -66,13 +67,16 @@ end
     oneDark,
     keymap.of(defaultKeymap),
     basicSetup,
-    python(),
+    turtleHighlight,
+    codeFolding(),
+    // foldGutter(),
+    turtleFoldService,
     autocompletion({ override: [codeCompletions] }),
     autoSaveExtension,
     keymap.of([
-    { key: 'Tab', preventDefault: true, run: insertTab },
-    { key: 'Shift-Tab', preventDefault: true, run: indentLess }
-  ])
+      { key: "Tab", preventDefault: true, run: insertTab },
+      { key: "Shift-Tab", preventDefault: true, run: indentLess },
+    ]),
   ],
 });
 const editor = new EditorView({
@@ -125,37 +129,37 @@ fileInput.addEventListener("change", (event) => {
   reader.readAsText(file);
 });
 
-
-
 export const isMobile = () => {
-  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  
-  // Checks for common mobile patterns
-  return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase()) || (isTouch && window.innerWidth <= 768);
+  const userAgent =
+    navigator.userAgent || navigator.vendor || (window as any).opera;
+  const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  return (
+    /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+      userAgent.toLowerCase(),
+    ) ||
+    (isTouch && window.innerWidth <= 768)
+  );
 };
 
-const symbols = ["#", "[", "]", "," ,"(", ")", "=", "<", ">"];
+const symbols = ["#", "[", "]", ",", "(", ")", "=", "<", ">"];
 
 const createToolbar = (view: EditorView) => {
   const bar = document.getElementById("mobile-toolbar")!;
-  symbols.forEach(sym => {
+  symbols.forEach((sym) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "sym-btn";
     btn.textContent = sym;
-
-    // Use mousedown/touchstart to intercept focus
     btn.addEventListener("mousedown", (e) => {
-      e.preventDefault(); // This is the secret sauce to keep the keyboard up
-      
+      e.preventDefault();
+
       const { main } = view.state.selection;
       view.dispatch({
         changes: { from: main.from, to: main.to, insert: sym },
         selection: { anchor: main.from + sym.length },
         scrollIntoView: true,
       });
-      
+
       view.focus();
     });
 
@@ -165,17 +169,14 @@ const createToolbar = (view: EditorView) => {
   return bar;
 };
 
-if (isMobile()){
-    createToolbar(editor);
+if (isMobile()) {
+  createToolbar(editor);
 }
-
-
 
 Console.initialize("console-output");
-(document.querySelector<HTMLDivElement>(".console-clear")!).onclick = ()=>{
-  Console.clear()
-}
-
+document.querySelector<HTMLDivElement>(".console-clear")!.onclick = () => {
+  Console.clear();
+};
 
 const consoleBtn = document.getElementById(
   "consoleToggleBtn",
@@ -186,7 +187,6 @@ const consoleContainer = document.getElementById(
 const consoleHeader = document.querySelector(
   ".console-header",
 ) as HTMLDivElement;
-
 
 consoleBtn.addEventListener("click", () => {
   consoleContainer.classList.toggle("mobile-show");
@@ -202,8 +202,6 @@ consoleHeader.addEventListener("click", () => {
     consoleBtn.textContent = "⌨";
   }
 });
-
-
 
 const canvas = document.getElementById("turtleCanvas") as HTMLCanvasElement;
 const cursorCanvas = document.getElementById(
@@ -223,8 +221,6 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-
-
 let run: (code: string) => void;
 
 import("./lang/run").then((module) => {
@@ -233,7 +229,6 @@ import("./lang/run").then((module) => {
 
 async function runCode() {
   const code = editor.state.doc.toString();
-  // await TurtleCanvas.reset();
   turtle.reset();
   run(code + "\n");
   // console.log(code);

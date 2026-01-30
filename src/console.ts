@@ -14,8 +14,7 @@ class ConsoleClass {
     this.outputElement = document.getElementById(elementId) as HTMLDivElement;
   }
   print(message: string, type: 'info' | 'warn' | 'error' = 'info'): void {
-    console.log(message); // Still log to dev tools
-
+    console.log(message);
     if (this.outputElement) {
       const line = document.createElement('div');
       line.className = `log-${type}`;

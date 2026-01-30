@@ -107,15 +107,12 @@ class Interpreter {
   ): BooleanVal {
     let result: boolean = false;
     switch (operator) {
-      // Equality
       case "==":
         result = lhs.value == rhs.value;
         break;
       case "!=":
         result = lhs.value != rhs.value;
         break;
-
-      // Comparison
       case ">":
         result = lhs.value > rhs.value;
         break;
@@ -128,8 +125,6 @@ class Interpreter {
       case "<=":
         result = lhs.value <= rhs.value;
         break;
-
-      // Logical (if lhs/rhs are booleans)
       case "&":
         if (lhs.type == "boolean" && rhs.type == "boolean") {
           result = lhs.value && rhs.value;

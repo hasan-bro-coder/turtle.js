@@ -20,35 +20,37 @@ const STORAGE_KEY = "turtle_js_code_autosave";
 const getSavedCode = (): string => {
   return (
     localStorage.getItem(STORAGE_KEY) ||
-    `num_steps = 60
-step_size = 5
-turn_angle = 120
+    `# DIHH EXAMPLE
+size = 7 
+ballsize = 4
+
+up
+move 0,100
+down
+circle ballsize*10
+circle 0-(ballsize*10)
+up 
+arc ballsize*10,90
+down
+left 90
+forward 20*size
+arc 0-(ballsize*10),-180
+forward 20*size
+hidepen
 
 
-for i num_steps do
-    forward step_size
-    left turn_angle 
-    step_size = step_size + 10
-    wait 100
-end
+# ACTUAL EXAMPLE
+# num_steps = 60
+# step_size = 5
+# turn_angle = 120
 
-# DIHH EXAMPLE
-# size = 7
-# ballsize = 4
 
-# up
-# move 0,100
-# down
-# circle ballsize*10
-# circle 0-(ballsize*10)
-# up
-# arc ballsize*10,90
-# down
-# left 90
-# forward 20*size
-# arc 0-(ballsize*10),-180
-# forward 20*size
-# hidepen`
+# for i num_steps do
+#     forward step_size
+#     left turn_angle 
+#     step_size = step_size + 10
+#     wait 100
+# end`
   );
 };
 
@@ -76,7 +78,7 @@ const autoSaveExtension = EditorView.updateListener.of((update) => {
     const code = update.state.doc.toString();
     localStorage.setItem(STORAGE_KEY, code);
     console.log("Saved to local storage");
-    debouncedReload();
+    // debouncedReload();
     // runCode();
   }
 });

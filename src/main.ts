@@ -19,21 +19,7 @@ import { turtle } from "./module";
 const STORAGE_KEY = "turtle_js_code_autosave";
 const getSavedCode = (): string => {
   return (
-    localStorage.getItem(STORAGE_KEY) || `forward 100\nright 90\nforward 100`
-  );
-};
-
-const autoSaveExtension = EditorView.updateListener.of((update) => {
-  if (update.docChanged) {
-    const code = update.state.doc.toString();
-    localStorage.setItem(STORAGE_KEY, code);
-    console.log("Saved to local storage");
-  }
-});
-
-let startState = EditorState.create({
-  doc:
-    getSavedCode() ||
+    localStorage.getItem(STORAGE_KEY) ||
     `num_steps = 60
 step_size = 5
 turn_angle = 120
@@ -62,7 +48,20 @@ end
 # forward 20*size
 # arc 0-(ballsize*10),-180
 # forward 20*size
-# hidepen`,
+# hidepen`
+  );
+};
+
+const autoSaveExtension = EditorView.updateListener.of((update) => {
+  if (update.docChanged) {
+    const code = update.state.doc.toString();
+    localStorage.setItem(STORAGE_KEY, code);
+    console.log("Saved to local storage");
+  }
+});
+
+let startState = EditorState.create({
+  doc: getSavedCode(),
   extensions: [
     oneDark,
     keymap.of(defaultKeymap),

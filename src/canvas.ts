@@ -71,7 +71,7 @@ export class TurtleCanvas {
     }
   }
 
-  private async _rotate(degrees: number): Promise<void> {
+  private async _rotate(degrees: number,instant:boolean=false): Promise<void> {
     const startId = this.currentExecutionId;
     const startAngle = this.state.angle;
     const radians = (degrees * Math.PI) / 180;
@@ -89,7 +89,7 @@ export class TurtleCanvas {
       this.state.angle = startAngle + (targetAngle - startAngle) * progress;
 
       this._renderCursor();
-      if (!isInstant) await this._tick();
+      if (!isInstant && !instant) await this._tick();
     }
 
     this.state.angle = targetAngle;
@@ -143,7 +143,8 @@ export class TurtleCanvas {
   }
 
   async backward(n: number) {
-    await this._move(-n);
+    await this._rotate(180,true);
+    await this._move(n);
   }
 
   async right(deg: number) {
@@ -163,40 +164,46 @@ export class TurtleCanvas {
     if (this.isFilling)
       this.fillPath.push({ x: this.state.x, y: this.state.y });
   }
+async circle(radius: number, extent: number = 360) {
+  const executionId = this.currentExecutionId;
+  const steps = Math.max(4 * (extent / 180), Math.floor(Math.abs(extent) / 16));
+  const stepAngle = extent / steps;
+  const stepAngleRad = (stepAngle * Math.PI) / 180;
+  const absRadius = Math.abs(radius);
+  const chordDist = 2 * absRadius * Math.sin(stepAngleRad / 2);
+  const directionMultiplier = radius < 0 ? -1 : 1;
 
-   async circle(radius: number, extent: number = 360) {
-    const executionId = this.currentExecutionId;
-    const steps = Math.max(4 * (extent / 180), Math.floor(Math.abs(extent) / 16));
-    const stepAngle = extent / steps;
-    const stepAngleRad = (stepAngle * Math.PI) / 180;
-    const chordDist = 2 * radius * Math.sin(stepAngleRad / 2);
+  for (let i = 0; i < steps; i++) {
+    if (this.currentExecutionId !== executionId) return;
 
-    for (let i = 0; i < steps; i++) {
-      if (this.currentExecutionId !== executionId) return;
-      await this._rotate(-stepAngle / 2);
-      await this._move(chordDist);
-      await this._rotate(-stepAngle / 2);
+    await this._rotate(-(stepAngle / 2) * directionMultiplier);
+    await this._move(chordDist);
+    await this._rotate(-(stepAngle / 2) * directionMultiplier);
 
-      if (this.state.speed !== -1) {
-        await this._tick();
-      }
+    if (this.state.speed !== -1) {
+      await this._tick();
     }
   }
-  // async circle(radius: number, extent: number = 360) {
+}
+  //  async circle(radius: number, extent: number = 360) {
   //   const executionId = this.currentExecutionId;
-  //   const steps = Math.max(1, Math.floor(Math.abs(extent) / 16));
+  //   const steps = Math.max(4 * (extent / 180), Math.floor(Math.abs(extent) / 16));
   //   const stepAngle = extent / steps;
   //   const stepAngleRad = (stepAngle * Math.PI) / 180;
   //   const chordDist = 2 * radius * Math.sin(stepAngleRad / 2);
+
   //   for (let i = 0; i < steps; i++) {
   //     if (this.currentExecutionId !== executionId) return;
-  //     await this._rotate(stepAngle / 2);
+  //     await this._rotate(-stepAngle / 2);
   //     await this._move(chordDist);
-  //     await this._rotate(stepAngle / 2);
-  //     const delay = Math.max(0, 100 / (this.state.speed || 5));
-  //     await new Promise((r) => setTimeout(r, delay));
+  //     await this._rotate(-stepAngle / 2);
+
+  //     if (this.state.speed !== -1) {
+  //       await this._tick();
+  //     }
   //   }
   // }
+  
 
   async angle(targetDeg: number) {
     const currentDeg = (this.state.angle * 180) / Math.PI;

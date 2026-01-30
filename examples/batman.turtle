@@ -1,0 +1,100 @@
+
+size 3
+bfill
+circle 50, 85
+circle 15, 110
+right 180 
+circle 30, 150
+right 5
+forward 10
+right 90
+circle -70, -140
+forward 40
+ right 110
+circle 100, 30
+circle 30, 100
+left 50
+forward 50
+right 145
+forward 30
+left 55
+forward 10
+forward 10
+left 55
+forward 30
+right 145
+forward 50
+left 50
+circle 30, 100
+circle 100, 30
+right 90
+right 20
+forward 40
+circle -70,-140
+right 90
+forward 10
+right 5
+circle 30, 150
+left 180
+circle 15, 110
+circle 50,85
+efill
+hidepen
+
+
+
+
+# # # Screen and Pen setup
+# # # wn.bgcolor("dark blue") -> Handled by your CSS/Canvas background
+# # size 3
+# # color "yellow" # Outline/Fill color
+# # speed 100
+# # bfill
+# # arc 50, 85
+# # arc 15, 110
+# # right 180
+
+# # arc 30, 150
+# # right 5
+# # forward 10
+
+# # right 90
+# # arc 70, -140
+# # backward 40
+# # right 70
+
+# # arc 100, 30
+# # arc 30, 100
+# # right 50
+# # forward 50
+# # left 145
+
+# # forward 30
+# # right 55
+# # forward 10
+
+# # forward 10
+# # right 55
+# # forward 30
+
+# # left 145
+# # forward 50
+# # right 50
+# # arc 30, 100
+# # arc 100, 30
+
+# # left 90
+# # left 20
+# # forward 40
+# # arc -70, -140
+
+# # left 90
+# # forward 10
+# # right 5
+# # arc 30, 150
+
+# # left 180
+# # arc 15, 110
+# # arc 50, 85
+# # efill
+# # hidepen

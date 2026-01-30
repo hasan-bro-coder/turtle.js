@@ -1,0 +1,9 @@
+num_steps = 60
+step_size = 5
+turn_angle = 120
+for i num_steps do
+    forward step_size
+    left turn_angle 
+    step_size = step_size + 10
+    wait 100
+end

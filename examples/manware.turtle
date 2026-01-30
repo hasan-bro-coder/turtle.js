@@ -1,0 +1,33 @@
+speed -1
+color "blue"
+fillcolor "blue"
+
+up
+move -100,100
+down
+
+bfill
+for i 4 do
+	forward 200
+    right 90
+end
+efill
+
+move 70,-150
+color "white"
+fillcolor "white"
+bfill
+circle 10
+efill
+up
+move 80,0
+down
+bfill
+circle 10
+efill
+
+up
+goto -100,140
+down
+write "manware-dumb-mouth.png"
+hidepen

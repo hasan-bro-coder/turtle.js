@@ -31,9 +31,9 @@ circle 0-(ballsize*10)
 up 
 arc ballsize*10,90
 down
-left 90
+right 90
 forward 20*size
-arc 0-(ballsize*10),-180
+arc 0-(ballsize*10),180
 forward 20*size
 hidepen
 

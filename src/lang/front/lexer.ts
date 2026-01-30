@@ -196,7 +196,7 @@ export class Lexer {
           }
         } else if (this.isalpha(this.src[0])) {
           let ident = "";
-          while (this.src.length > 0 && this.isalpha(this.src[0])) {
+          while (this.src.length > 0 && (this.isalpha(this.src[0]) || this.isint(this.src[0]))) {
             ident += this.src.shift();
           }
           const reserved = KEYWORDS[ident];

@@ -39,42 +39,28 @@ class Interpreter {
     this.interrupted = true;
     console.log("Interpreter: Program interrupted");
   }
-
-  /**
-   * Reset the interpreter state for a new program
-   */
   public reset(): void {
     this.err = false;
     this.errMessage = "";
     this.interrupted = false;
   }
-
-  /**
-   * Check if execution should stop
-   */
   private shouldStop(): boolean {
     return this.err || this.interrupted;
   }
-
-  /**
-   * Check if interpreter is currently running a program
-   */
   public getIsRunning(): boolean {
     return this.isRunning;
   }
 
   public async eval_program(program: Program): Promise<RuntimeVal> {
-    // If already running, interrupt the previous execution
     if (this.isRunning) {
       console.log(
         "Interpreter: Already running, interrupting previous program",
       );
       this.interrupt();
-      // Give it a moment to stop
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
-    this.reset(); // Reset state at start of new program
+    this.reset();
     this.isRunning = true;
 
     let lastEvaluated: RuntimeVal = MK_NULL();
@@ -120,14 +106,49 @@ class Interpreter {
     operator: string,
   ): BooleanVal {
     let result: boolean = false;
-    if (operator == "==") {
-      result = lhs.value == rhs.value;
-    } else if (operator == ">") {
-      result = lhs.value > rhs.value;
-    } else if (operator == "<") {
-      result = lhs.value < rhs.value;
-    } else if (operator == "!=") {
-      result = lhs.value != rhs.value;
+    switch (operator) {
+      // Equality
+      case "==":
+        result = lhs.value == rhs.value;
+        break;
+      case "!=":
+        result = lhs.value != rhs.value;
+        break;
+
+      // Comparison
+      case ">":
+        result = lhs.value > rhs.value;
+        break;
+      case "<":
+        result = lhs.value < rhs.value;
+        break;
+      case ">=":
+        result = lhs.value >= rhs.value;
+        break;
+      case "<=":
+        result = lhs.value <= rhs.value;
+        break;
+
+      // Logical (if lhs/rhs are booleans)
+      case "&":
+        if (lhs.type == "boolean" && rhs.type == "boolean") {
+          result = lhs.value && rhs.value;
+        }else{
+          this.err = true;
+          this.errMessage = "& oparator can only be used between bollean expr"+lhs+rhs;
+        }
+        break;
+      case "|":
+        if (lhs.type == "boolean" && rhs.type == "boolean") {
+          result = lhs.value || rhs.value;
+        }else{
+          this.err = true;
+          this.errMessage = "| oparator can only be used between bollean expr "+lhs+rhs;
+        }
+        break;
+
+      default:
+        throw `Unknown operator '${operator}' in binary expression.`;
     }
     return { value: result } as BooleanVal;
   }
@@ -175,6 +196,7 @@ class Interpreter {
 
   private async eval_if(ifstmt: IfStmt): Promise<RuntimeVal> {
     const condition = (await this.evaluate(ifstmt.condition)) as BooleanVal;
+
     if (condition.value) {
       return await this.evaluate_body(ifstmt.body);
     } else if (ifstmt.alternate) {
@@ -185,8 +207,6 @@ class Interpreter {
 
   private async eval_loop(stmt: LoopStmt): Promise<RuntimeVal> {
     let condition = (await this.evaluate(stmt.condition)) as BooleanVal;
-    console.log(condition);
-
     let result: RuntimeVal = MK_NULL();
     while (condition.value && !this.shouldStop()) {
       result = await this.evaluate_body(stmt.body);
@@ -202,10 +222,10 @@ class Interpreter {
     let value = {
       value: i,
       type: "number",
-    } as NumberVal
+    } as NumberVal;
     if (this.globalEnv.variables.has(stmt.varname)) {
       this.globalEnv.assignVar(stmt.varname, value);
-    }else{
+    } else {
       this.globalEnv.declareVar(stmt.varname, value);
     }
     while (i < condition.value && !this.shouldStop()) {
@@ -232,9 +252,14 @@ class Interpreter {
       this.err = true;
       return MK_NULL();
     }
-    func.args.forEach(async (arg, index) => {
-      this.globalEnv.declareVar(arg, await this.evaluate(stmt.props[index]));
-    });
+    for (const [index, arg] of func.args.entries()) {
+      const value = await this.evaluate(stmt.props[index]);
+      if (this.globalEnv.variables.has(arg)) {
+        this.globalEnv.assignVar(arg, value);
+      } else {
+        this.globalEnv.declareVar(arg, value);
+      }
+    }
     return this.evaluate_body(func.body);
   }
 
@@ -261,7 +286,6 @@ class Interpreter {
   }
 
   public async evaluate(astNode: Stmt): Promise<RuntimeVal> {
-    // Check for interruption before evaluating each statement
     if (this.shouldStop()) {
       return MK_NULL();
     }
@@ -310,8 +334,9 @@ class Interpreter {
         return this.eval_func(astNode as FuncStmt);
       case "FuncExpr":
         return await this.eval_func_run(astNode as FuncExpr);
-      // default:
-      // this.errMessage = "This AST Node has not yet been setup for interpretation " + astNode;
+      default:
+        this.errMessage =
+          "This AST Node has not yet been setup for interpretation " + astNode;
     }
     return MK_NULL();
   }

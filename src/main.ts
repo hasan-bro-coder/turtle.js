@@ -1,6 +1,6 @@
 import "./style.css";
 import { EditorState } from "@codemirror/state";
-import { foldGutter, codeFolding } from "@codemirror/language";
+import { codeFolding } from "@codemirror/language";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { defaultKeymap } from "@codemirror/commands";

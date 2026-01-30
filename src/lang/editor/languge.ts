@@ -149,7 +149,7 @@ const turtleLanguage = {
 export const turtleHighlight = StreamLanguage.define(turtleLanguage);
 
 
-export const turtleFoldService = foldService.of((state, lineStart, lineEnd) => {
+export const turtleFoldService = foldService.of((state, lineStart, _) => {
   const line = state.doc.lineAt(lineStart).text;
   
   if (line.includes("do") && !line.includes("end")) {

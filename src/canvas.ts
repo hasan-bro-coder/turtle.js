@@ -5,6 +5,7 @@ interface TurtleState {
   angle: number;
   penDown: boolean;
   color: string;
+  fillcolor: string;
   size: number;
   speed: number;
   isVisible: boolean;
@@ -130,6 +131,7 @@ export class TurtleCanvas {
       angle: -Math.PI / 2,
       penDown: true,
       color: "white",
+      fillcolor:"white",
       size: 2,
       speed: 5,
       isVisible: true,
@@ -161,22 +163,40 @@ export class TurtleCanvas {
     if (this.isFilling)
       this.fillPath.push({ x: this.state.x, y: this.state.y });
   }
-  
-  async circle(radius: number, extent: number = 360) {
+
+   async circle(radius: number, extent: number = 360) {
     const executionId = this.currentExecutionId;
-    const steps = Math.max(1, Math.floor(Math.abs(extent) / 16));
+    const steps = Math.max(4 * (extent / 180), Math.floor(Math.abs(extent) / 16));
     const stepAngle = extent / steps;
     const stepAngleRad = (stepAngle * Math.PI) / 180;
     const chordDist = 2 * radius * Math.sin(stepAngleRad / 2);
+
     for (let i = 0; i < steps; i++) {
       if (this.currentExecutionId !== executionId) return;
-      await this._rotate(stepAngle / 2);
+      await this._rotate(-stepAngle / 2);
       await this._move(chordDist);
-      await this._rotate(stepAngle / 2);
-      const delay = Math.max(0, 100 / (this.state.speed || 5));
-      await new Promise((r) => setTimeout(r, delay));
+      await this._rotate(-stepAngle / 2);
+
+      if (this.state.speed !== -1) {
+        await this._tick();
+      }
     }
   }
+  // async circle(radius: number, extent: number = 360) {
+  //   const executionId = this.currentExecutionId;
+  //   const steps = Math.max(1, Math.floor(Math.abs(extent) / 16));
+  //   const stepAngle = extent / steps;
+  //   const stepAngleRad = (stepAngle * Math.PI) / 180;
+  //   const chordDist = 2 * radius * Math.sin(stepAngleRad / 2);
+  //   for (let i = 0; i < steps; i++) {
+  //     if (this.currentExecutionId !== executionId) return;
+  //     await this._rotate(stepAngle / 2);
+  //     await this._move(chordDist);
+  //     await this._rotate(stepAngle / 2);
+  //     const delay = Math.max(0, 100 / (this.state.speed || 5));
+  //     await new Promise((r) => setTimeout(r, delay));
+  //   }
+  // }
 
   async angle(targetDeg: number) {
     const currentDeg = (this.state.angle * 180) / Math.PI;
@@ -275,11 +295,11 @@ export class TurtleCanvas {
       this.ctx.lineTo(point.x, point.y);
     }
     this.ctx.closePath();
-    this.ctx.fillStyle = this.state.color;
+    this.ctx.fillStyle = this.state.fillcolor;
     this.ctx.fill();
 
     if (this.state.penDown) {
-      this.ctx.strokeStyle = this.state.color;
+      this.ctx.strokeStyle = this.state.fillcolor;
       this.ctx.lineWidth = this.state.size;
       this.ctx.stroke();
     }

@@ -76,7 +76,7 @@ environment
     return MK_NULL();
   })
   .addBuilitinFunc("circle", async (args: Promise<RuntimeVal>[]) => {
-    await turtle.circle(((await args[0]) as NumberVal).value);
+    await turtle.circle(((await args[0]) as NumberVal).value,((await args[1]) as NumberVal)?.value || 360);
     return MK_NULL();
   })
   .addBuilitinFunc("arc", async (args: Promise<RuntimeVal>[]) => {
@@ -120,10 +120,10 @@ environment
 
     return MK_NULL();
   })
-  // .addBuilitinFunc("fillcolor", async (args: Promise<RuntimeVal>[]) => {
-  //   turtle.fillcolor((await args[0] as any).value);
-  //   return MK_NULL();
-  // })
+  .addBuilitinFunc("fillcolor", async (args: Promise<RuntimeVal>[]) => {
+    turtle.state.fillcolor = (await args[0] as StringVal).value;
+    return MK_NULL();
+  })
   .addBuilitinFunc("bfill", async () => {
     turtle.begin_fill();
     return MK_NULL();

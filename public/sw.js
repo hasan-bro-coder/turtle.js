@@ -1,29 +1,29 @@
-const CACHE_NAME = 'noter-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/src/main.ts', // Vite will resolve this in dev, but in build it will be different
-  '/style.css',
-  '/manifest.json'
-];
+const CACHE_NAME = 'turtle-runtime-v1';
 
-// 1. Install Event: Cache all essential files
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.keys().then((keys) => 
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
   );
 });
 
-// 2. Fetch Event: Serve files from cache when offline
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-    //   return response || fetch(event.request);
-      return fetch(event.request);
+  if (event.request.method !== 'GET') return;
 
-    })
+  event.respondWith(
+    fetch(event.request)
+      .then(async (networkResponse) => {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(event.request, networkResponse.clone());
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
-

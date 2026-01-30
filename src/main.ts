@@ -52,11 +52,32 @@ end
   );
 };
 
+function debounce(func: Function, wait: number) {
+  let timeout: number | null = null;
+  return (...args: any[]) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = window.setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}
+const reloadAndRun = async () => {
+  turtle.reset(); 
+  try {
+    runCode();
+  } catch (err) {
+  }
+};
+
+const debouncedReload = debounce(reloadAndRun, 500);
+
 const autoSaveExtension = EditorView.updateListener.of((update) => {
   if (update.docChanged) {
     const code = update.state.doc.toString();
     localStorage.setItem(STORAGE_KEY, code);
     console.log("Saved to local storage");
+    debouncedReload();
+    // runCode();
   }
 });
 
@@ -82,6 +103,14 @@ const editor = new EditorView({
   state: startState,
   parent: document.querySelector("#editor-container")!,
 });
+
+
+
+
+
+
+
+
 
 const exportBtn = document.getElementById("exportBtn") as HTMLButtonElement;
 const importBtn = document.getElementById("importBtn") as HTMLButtonElement;

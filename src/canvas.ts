@@ -12,7 +12,7 @@ interface TurtleState {
 
 export class TurtleCanvas {
   public state: TurtleState;
-  private drawCtx: CanvasRenderingContext2D;
+  private ctx: CanvasRenderingContext2D;
   private cursorCtx: CanvasRenderingContext2D;
   private currentExecutionId = 0;
   private fillPath: { x: number; y: number }[] = [];
@@ -22,7 +22,7 @@ export class TurtleCanvas {
   constructor(drawCanvas: HTMLCanvasElement, cursorCanvas: HTMLCanvasElement) {
     this.drawCanvas = drawCanvas;
     // this.cursorCanvas = cursorCanvas;
-    this.drawCtx = drawCanvas.getContext("2d")!;
+    this.ctx = drawCanvas.getContext("2d")!;
     this.cursorCtx = cursorCanvas.getContext("2d")!;
     this.state = this._getDefaultState();
     this.reset();
@@ -52,12 +52,12 @@ export class TurtleCanvas {
       const nextY = startY + (endY - startY) * progress;
 
       if (this.state.penDown) {
-        this.drawCtx.beginPath();
-        this.drawCtx.moveTo(prevX, prevY);
-        this.drawCtx.lineTo(nextX, nextY);
-        this.drawCtx.strokeStyle = this.state.color;
-        this.drawCtx.lineWidth = this.state.size;
-        this.drawCtx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(prevX, prevY);
+        this.ctx.lineTo(nextX, nextY);
+        this.ctx.strokeStyle = this.state.color;
+        this.ctx.lineWidth = this.state.size;
+        this.ctx.stroke();
       }
 
       this.state.x = nextX;
@@ -125,8 +125,8 @@ export class TurtleCanvas {
 
   private _getDefaultState(): TurtleState {
     return {
-      x: this.drawCtx.canvas.width / 2,
-      y: this.drawCtx.canvas.height / 2,
+      x: this.ctx.canvas.width / 2,
+      y: this.ctx.canvas.height / 2,
       angle: -Math.PI / 2,
       penDown: true,
       color: "white",
@@ -154,10 +154,10 @@ export class TurtleCanvas {
 
   async dot(size?: number, color?: string) {
     const radius = size ? size / 2 : this.state.size * 2;
-    this.drawCtx.beginPath();
-    this.drawCtx.arc(this.state.x, this.state.y, radius, 0, Math.PI * 2);
-    this.drawCtx.fillStyle = color || this.state.color;
-    this.drawCtx.fill();
+    this.ctx.beginPath();
+    this.ctx.arc(this.state.x, this.state.y, radius, 0, Math.PI * 2);
+    this.ctx.fillStyle = color || this.state.color;
+    this.ctx.fill();
     if (this.isFilling)
       this.fillPath.push({ x: this.state.x, y: this.state.y });
   }
@@ -201,12 +201,12 @@ export class TurtleCanvas {
     const physicalY = centerY - y;
 
     if (this.state.penDown) {
-      this.drawCtx.beginPath();
-      this.drawCtx.moveTo(this.state.x, this.state.y);
-      this.drawCtx.lineTo(physicalX, physicalY);
-      this.drawCtx.strokeStyle = this.state.color;
-      this.drawCtx.lineWidth = this.state.size;
-      this.drawCtx.stroke();
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.state.x, this.state.y);
+      this.ctx.lineTo(physicalX, physicalY);
+      this.ctx.strokeStyle = this.state.color;
+      this.ctx.lineWidth = this.state.size;
+      this.ctx.stroke();
     }
     this.state.x = physicalX;
     this.state.y = physicalY;
@@ -218,12 +218,12 @@ export class TurtleCanvas {
   
   moveTo(x: number, y: number) {
     if (this.state.penDown) {
-      this.drawCtx.beginPath();
-      this.drawCtx.moveTo(this.state.x, this.state.y);
-      this.drawCtx.lineTo(this.state.x + x, this.state.y + y);
-      this.drawCtx.strokeStyle = this.state.color;
-      this.drawCtx.lineWidth = this.state.size;
-      this.drawCtx.stroke();
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.state.x, this.state.y);
+      this.ctx.lineTo(this.state.x + x, this.state.y + y);
+      this.ctx.strokeStyle = this.state.color;
+      this.ctx.lineWidth = this.state.size;
+      this.ctx.stroke();
     }
     this.state.x += x;
     this.state.y += y;
@@ -269,19 +269,19 @@ export class TurtleCanvas {
   end_fill() {
     if (!this.isFilling || this.fillPath.length < 3) return;
 
-    this.drawCtx.beginPath();
-    this.drawCtx.moveTo(this.fillPath[0].x, this.fillPath[0].y);
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.fillPath[0].x, this.fillPath[0].y);
     for (const point of this.fillPath) {
-      this.drawCtx.lineTo(point.x, point.y);
+      this.ctx.lineTo(point.x, point.y);
     }
-    this.drawCtx.closePath();
-    this.drawCtx.fillStyle = this.state.color;
-    this.drawCtx.fill();
+    this.ctx.closePath();
+    this.ctx.fillStyle = this.state.color;
+    this.ctx.fill();
 
     if (this.state.penDown) {
-      this.drawCtx.strokeStyle = this.state.color;
-      this.drawCtx.lineWidth = this.state.size;
-      this.drawCtx.stroke();
+      this.ctx.strokeStyle = this.state.color;
+      this.ctx.lineWidth = this.state.size;
+      this.ctx.stroke();
     }
 
     this.isFilling = false;
@@ -289,21 +289,21 @@ export class TurtleCanvas {
   }
 
   write(text: string, font: string = "16px Arial") {
-    this.drawCtx.save();
-    this.drawCtx.font = font;
-    this.drawCtx.fillStyle = this.state.color;
-    this.drawCtx.textAlign = "left";
-    this.drawCtx.textBaseline = "middle";
-    this.drawCtx.fillText(text, this.state.x, this.state.y);
-    this.drawCtx.restore();
+    this.ctx.save();
+    this.ctx.font = font;
+    this.ctx.fillStyle = this.state.color;
+    this.ctx.textAlign = "left";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText(text, this.state.x, this.state.y);
+    this.ctx.restore();
   }
 
   clear() {
-    this.drawCtx.clearRect(
+    this.ctx.clearRect(
       0,
       0,
-      this.drawCtx.canvas.width,
-      this.drawCtx.canvas.height,
+      this.ctx.canvas.width,
+      this.ctx.canvas.height,
     );
   }
 

@@ -12,7 +12,7 @@ import {
   turtleFoldService,
   turtleHighlight,
 } from "./lang/editor/languge";
-import { autocompletion } from "@codemirror/autocomplete";
+// import { autocompletion } from "@codemirror/autocomplete";
 import { turtle } from "./module";
 
 const STORAGE_KEY = "turtle_js_code_autosave";

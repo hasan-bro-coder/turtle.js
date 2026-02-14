@@ -8,7 +8,7 @@ import { insertTab, indentLess } from "@codemirror/commands";
 // import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
-  codeCompletions,
+  // codeCompletions,
   turtleFoldService,
   turtleHighlight,
 } from "./lang/editor/languge";
@@ -92,7 +92,7 @@ let startState = EditorState.create({
     codeFolding(),
     // foldGutter(),
     turtleFoldService,
-    autocompletion({ override: [codeCompletions] }),
+    // autocompletion({ override: [codeCompletions] }),
     autoSaveExtension,
     keymap.of([
       { key: "Tab", preventDefault: true, run: insertTab },

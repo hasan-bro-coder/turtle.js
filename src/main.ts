@@ -1,9 +1,9 @@
 import "./style.css";
 import { EditorState } from "@codemirror/state";
 import { codeFolding } from "@codemirror/language";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
-import { defaultKeymap } from "@codemirror/commands";
+// import { defaultKeymap } from "@codemirror/commands";
 import { insertTab, indentLess } from "@codemirror/commands";
 // import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
@@ -86,12 +86,12 @@ let startState = EditorState.create({
   doc: getSavedCode(),
   extensions: [
     oneDark,
-    keymap.of(defaultKeymap),
+    // keymap.of(defaultKeymap),
     basicSetup,
     turtleHighlight,
     codeFolding(),
     // foldGutter(),
-    turtleFoldService,
+    // turtleFoldService,
     // autocompletion({ override: [codeCompletions] }),
     autoSaveExtension,
     keymap.of([

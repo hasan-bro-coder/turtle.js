@@ -19,37 +19,17 @@ const STORAGE_KEY = "turtle_js_code_autosave";
 const getSavedCode = (): string => {
   return (
     localStorage.getItem(STORAGE_KEY) ||
-    `# DIHH EXAMPLE
-size = 7 
-ballsize = 4
-
-up
-move 0,100
-down
-circle ballsize*10
-circle 0-(ballsize*10)
-up 
-arc ballsize*10,90
-down
-right 90
-forward 20*size
-arc 0-(ballsize*10),180
-forward 20*size
-hidepen
+    `num_steps = 60
+step_size = 5
+turn_angle = 120
 
 
-# ACTUAL EXAMPLE
-# num_steps = 60
-# step_size = 5
-# turn_angle = 120
-
-
-# for i num_steps do
-#     forward step_size
-#     left turn_angle 
-#     step_size = step_size + 10
-#     wait 100
-# end`
+for i num_steps do
+    forward step_size
+    left turn_angle 
+    step_size = step_size + 10
+    wait 100
+end`
   );
 };
 

@@ -9,7 +9,7 @@ import { insertTab, indentLess } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
   // codeCompletions,
-  turtleFoldService,
+  // turtleFoldService,
   turtleHighlight,
 } from "./lang/editor/languge";
 // import { autocompletion } from "@codemirror/autocomplete";
@@ -74,10 +74,10 @@ let startState = EditorState.create({
     // turtleFoldService,
     // autocompletion({ override: [codeCompletions] }),
     autoSaveExtension,
-    keymap.of([
-      { key: "Tab", preventDefault: true, run: insertTab },
-      { key: "Shift-Tab", preventDefault: true, run: indentLess },
-    ]),
+    // keymap.of([
+    //   { key: "Tab", preventDefault: true, run: insertTab },
+    //   { key: "Shift-Tab", preventDefault: true, run: indentLess },
+    // ]),
   ],
 });
 export const editor = new EditorView({

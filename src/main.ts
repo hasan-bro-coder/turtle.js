@@ -4,7 +4,7 @@ import { codeFolding } from "@codemirror/language";
 import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 // import { defaultKeymap } from "@codemirror/commands";
-import { insertTab, indentLess } from "@codemirror/commands";
+// import { insertTab, indentLess } from "@codemirror/commands";
 // import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
